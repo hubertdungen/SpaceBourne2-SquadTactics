@@ -9,6 +9,15 @@ G.Shooter      = "/Game/1Data/11_AI/Q1_Shooter_AI.Q1_Shooter_AI_C"            --
 G.Soldier      = "/Game/1Data/11_AI/BattleAI/Master_Soldier.Master_Soldier_C" -- squad and battle soldiers
 G.HandWeapon   = "/Game/1Data/Weapons/Hand_Weapons/Weapons/Master_Hand_Weapon.Master_Hand_Weapon_C"
 G.KismetSystem = "/Script/Engine.Default__KismetSystemLibrary"
+G.TargetPoint  = "/Script/Engine.TargetPoint"                                 -- our order anchors
+G.ChildActor   = "/Script/Engine.ChildActorComponent"                         -- the slot on an anchor
+G.Font         = "/Engine/EngineFonts/Roboto.Roboto"
+G.DrawHUD      = "/Game/1Data/Q1Hud.Q1Hud_C:ReceiveDrawHUD"                    -- the HUD canvas, each frame
+-- door Blueprints (DungeonFlow interior doors, dungeon gates): aiming at one offers "Stack up" first
+G.Doors = { DoorBase_C = true, New_Door_C = true, New_DoorSalvage_C = true, OneWayDoor_C = true,
+    New_OneWayDoor_C = true, Door_1_C = true, Door_2_C = true, Door_3_C = true, Door_4_C = true,
+    EBP_LockDoor_C = true, Q1_DungeonDoor_C = true, C_SpaceDungeonDoor_C = true, C_CampTypeDoor_C = true,
+    C_Cave_TypeDoor_C = true, C_SalvageTypeDoor_C = true }
 
 -- Fire events: any of them near you means a fight, and the squad goes back to the game's own combat AI.
 G.Fn = {
@@ -25,6 +34,9 @@ G.P = {
     Injured      = "InInjuredMode",
     RotationMode = "RotationMode",   -- ALS: 0 velocity direction, 1 looking direction, 2 aiming
     Target       = "C_Target",       -- the soldier's current target (Master_Soldier)
+    CrewIndex    = "Crew Index",     -- the soldier's place in your crew (teams are split by it)
+    GoalRM       = "GoalRM",         -- the formation slot it follows (a ChildActorComponent on you)
+    GoalActor    = "GoalActor",      -- that slot's actor
 }
 
 -- AIController:MoveToLocation result (EPathFollowingRequestResult)

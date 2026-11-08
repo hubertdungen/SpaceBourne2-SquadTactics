@@ -25,6 +25,7 @@ local G = require("st.gamedefs")
 local P = G.P
 
 local L = { on = true, men = {}, squad = {}, scanAt = -1e9, combatUntil = 0, player = nil, playerA = nil,
+    busy = {}, only = nil, -- soldiers with another order (orders.lua); the only ones allowed to lead (nil: any)
     traceFresh = false, tickNo = 0, stats = { ticks = 0, time = 0, max = 0, moves = 0, traces = 0, fails = 0, skipped = 0 } }
 
 local function cfg() return SQUAD_TACTICS.cfg.Lead end
@@ -191,7 +192,10 @@ local function scan(now)
     if now < L.scanAt then return end
     L.squad = {}
     for _, s in ipairs(FindAllOf(G.SquadShort) or {}) do
-        if U.valid(s) then L.squad[#L.squad + 1] = { obj = s, a = U.addr(s) } end
+        if U.valid(s) then
+            local crew = U.get(s, P.CrewIndex, 99)
+            L.squad[#L.squad + 1] = { obj = s, a = U.addr(s), crew = type(crew) == "number" and crew or 99 }
+        end
     end
     -- right after a load the squad may not be there yet: look again soon (a few times), then rarely
     L.empty = (#L.squad == 0) and (L.empty or 0) + 1 or 0
@@ -211,7 +215,7 @@ local function recruit(now, pos)
     if #L.men >= want then return end
     local best = {}
     for _, s in ipairs(L.squad) do
-        if U.alive(s.obj, s.a) and usable(s.obj) and not isMan(s.a) then
+        if U.alive(s.obj, s.a) and usable(s.obj) and not isMan(s.a) and not L.busy[s.a] and (not L.only or L.only[s.a]) then
             local l = U.location(s.obj)
             if l and dz(l, pos) < (cfg().FloorHeight or 350) then best[#best + 1] = { s = s, d = U.dist2(l, pos) } end
         end
@@ -454,9 +458,29 @@ function L.toggle()
     return L.on
 end
 
--- After a load or possession: the old soldiers are gone.
+-- After a load or possession (also getting into a ship): soldiers still there get their own logic back
+-- (0.1.x dropped the list and left pointmen paused, standing still, after a ship trip), then the lists
+-- start again.
 function L.reset()
+    for _, m in ipairs(L.men) do release(m) end
     L.men, L.squad, L.scanAt, L.pc, L.empty = {}, {}, os.clock() + 3, nil, 0
+end
+
+-- One soldier leaves the pointmen (it got another order).
+function L.drop(a)
+    local keep = {}
+    for _, m in ipairs(L.men) do
+        if m.a == a then release(m) else keep[#keep + 1] = m end
+    end
+    L.men = keep
+end
+
+-- The squad list now (orders.lua): read again when empty, stale or force.
+function L.ensureSquad(now, force)
+    local stale = #L.squad == 0
+    for _, s in ipairs(L.squad) do if not U.alive(s.obj, s.a) then stale = true; break end end
+    if force or stale then L.scanAt = -1e9; scan(now) end
+    return L.squad
 end
 
 function L.report()
@@ -467,5 +491,9 @@ function L.report()
     L.stats = { ticks = 0, time = 0, max = 0, moves = 0, traces = 0, fails = 0, skipped = 0 }
     return r
 end
+
+-- shared with orders.lua
+L.h = { setTimer = setTimer, timerPaused = timerPaused, controllerOf = controllerOf, usable = usable, trace = trace,
+    playerOnFoot = playerOnFoot, moved = moved, ksl = ksl }
 
 return L
