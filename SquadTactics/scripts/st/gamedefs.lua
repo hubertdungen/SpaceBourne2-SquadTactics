@@ -24,6 +24,7 @@ G.P = {
     Dead         = "NPCDead",
     Injured      = "InInjuredMode",
     RotationMode = "RotationMode",   -- ALS: 0 velocity direction, 1 looking direction, 2 aiming
+    Target       = "C_Target",       -- the soldier's current target (Master_Soldier)
 }
 
 -- AIController:MoveToLocation result (EPathFollowingRequestResult)

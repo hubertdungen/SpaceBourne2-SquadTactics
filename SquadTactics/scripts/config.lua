@@ -29,10 +29,11 @@ return {
         RunAbove       = 250,    -- cm/s: when you move faster, they run to the next spot
         Crouch         = true,   -- crouch at the spot
         MaxRange       = 4000,   -- a pointman farther than this from you goes back to the squad
-        CombatRange    = 5000,   -- gunfire this close to you...
+        CombatRange    = 3000,   -- gunfire this close to you or a pointman (a squad soldier's: its target)...
         CombatSeconds  = 12,     -- ...hands the pointmen back to the game's combat AI for this long
         TickSeconds    = 0.5,
         ScanSeconds    = 20,     -- the squad list is refreshed at most this often
+        FloorHeight    = 350,    -- a pointman this far above or below you (another floor) goes back to the squad
     },
 
     Messages = true,             -- short HUD line when the order is switched

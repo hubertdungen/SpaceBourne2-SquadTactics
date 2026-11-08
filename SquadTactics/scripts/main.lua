@@ -11,7 +11,7 @@
     st/hudmsg.lua     the set's on-screen line (shared by the set)
 ]]
 
-local VERSION = "0.1.0"
+local VERSION = "0.1.1"
 
 local U = require("st.util")
 
@@ -21,7 +21,7 @@ local defaults = {
     Lead = { StartOn = true, Key = "0", Pointmen = 2, Distance = 900, SecondDistance = 600, Leapfrog = 400,
         MaxLead = 1600, MinLead = 250, LeapWhenAhead = 350, YouMoved = 200, MinHoldSeconds = 1.5, RetrySeconds = 2, SideOffset = 150, SideSearch = 400,
         WallGap = 80, ArriveRadius = 120, MoveTimeout = 8, RunAbove = 250, Crouch = true, MaxRange = 4000,
-        CombatRange = 5000, CombatSeconds = 12, TickSeconds = 0.5, ScanSeconds = 20 },
+        CombatRange = 3000, CombatSeconds = 12, TickSeconds = 0.5, ScanSeconds = 20, FloorHeight = 350 },
     Messages = true,
     Debug = { Log = false, Commands = false },
 }
@@ -59,17 +59,28 @@ local function say(text)
     pcall(function() HM.show(L.player, text, 4, true) end)
 end
 
--- Gunfire near you hands the pointmen back to the game's combat AI (hooks run on the game thread).
-local function shotAt(self)
+-- Gunfire near you or the pointmen hands them back to the game's combat AI (hooks run on the game
+-- thread). An NPC's shot counts where the NPC is; a squad soldier's where its target is (the game calls
+-- BattleShoot every 1.5 s while a soldier sees a target, even far off: 0.1.0 counted those anywhere,
+-- and in a dungeon full of creatures the pointmen hardly ever led).
+local function npcShot(self)
     local a
     pcall(function() a = self:get() end)
-    L.combat(os.clock(), U.location(a))
+    L.combat(os.clock(), U.location(a), "enemy shot")
 end
-H.add(G.Fn.NpcShot, shotAt, "npc shot")
-H.add(G.Fn.SquadShot, function() L.combat(os.clock(), nil) end, "squad shot")
-H.add(G.Fn.SquadPistol, function() L.combat(os.clock(), nil) end, "squad pistol")
-H.add(G.Fn.PlayerShot, function() L.combat(os.clock(), nil) end, "your shot")
-H.add(G.Fn.PlayerBeam, function() L.combat(os.clock(), nil) end, "your beam")
+local function squadShot(self)
+    local a
+    pcall(function() a = self:get() end)
+    if not U.valid(a) then return end
+    local t = U.get(a, G.P.Target, nil)
+    local at = U.valid(t) and U.location(t) or U.location(a)
+    if at then L.combat(os.clock(), at, "squad shot") end
+end
+H.add(G.Fn.NpcShot, npcShot, "npc shot")
+H.add(G.Fn.SquadShot, squadShot, "squad shot")
+H.add(G.Fn.SquadPistol, squadShot, "squad pistol")
+H.add(G.Fn.PlayerShot, function() L.combat(os.clock(), nil, "your shot") end, "your shot")
+H.add(G.Fn.PlayerBeam, function() L.combat(os.clock(), nil, "your beam") end, "your beam")
 
 -- Timed work on the game thread: the HUD draw on foot and in a ship, the ALS tick as a fallback.
 GT.drive(GT.HUD_TICK, "hud")
