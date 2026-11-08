@@ -353,9 +353,15 @@ function L.tick(now)
         end
     end
     L.men = keep
-    if #L.men < math.max(1, math.min(2, c.Pointmen or 2)) then
-        scan(now)
+    -- new pointmen from the squad list we have; the list (one FindAllOf, ~50 ms: a visible hitch) is
+    -- read again only when it has nobody left to give (0.1.0 read it after every fight, test 27)
+    local want = math.max(1, math.min(2, c.Pointmen or 2))
+    if #L.men < want then
         recruit(now, pos)
+        if #L.men < want then
+            scan(now)
+            recruit(now, pos)
+        end
     end
     -- a pointman we drive keeps its battle timer paused (the game may restart it)
     for _, m in ipairs(L.men) do
