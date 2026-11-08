@@ -87,8 +87,9 @@ combat AI on the first shot. Silent Ops' awareness stays in charge of who sees y
 
 ## 6. Keys
 
-`0` (plain zero): free in the set's key plan (Ground Waypoints only suggests it as an optional
-toggle; Shift+0 is Ammo Discipline's and stays quiet, UE4SS matches modifiers exactly).
+0.1.0: `0` (plain zero) switches Lead the way on and off. It is free in the set's key plan (Ground
+Waypoints only suggests it as an optional toggle; Shift+0 is Ammo Discipline's and stays quiet, UE4SS
+matches modifiers exactly). 0.2.0 changes the keys: see section 8.2.
 
 ## 7. Pathfinding on the station deck (open question, 2026-11-08)
 
@@ -109,3 +110,112 @@ toggle; Shift+0 is Ammo Discipline's and stays quiet, UE4SS matches modifiers ex
   straight move stays as the fallback. The same run verified the hand-back on enemy fire and that
   pointmen stay put while you stand; with a wall right ahead the first pointman retried every tick
   (2.5 ms), so a failed spot now waits `RetrySeconds` (2 s).
+
+## 8. 0.2.0 plan: squad orders like Ready or Not (2026-11-08, not built yet)
+
+The user: pick everyone, a team or one or two soldiers, aim at a spot and give an order there, as in
+Ready or Not. Wished orders: move here, hold and cover here, stack up at a door and clear the room,
+lead the way, fall in, cover an ally or me, finish the downed, patrol (later), and a queued order
+started with one key. Fast in a fight; every order can be cancelled. Plus better squad movement.
+
+### 8.1 Research answers
+
+**What the game binds on foot** (key presets `MSM1_Character`, `MSM1_X_Shared`, `MSM1_CharacterGamepad`
+and the raw key events of `Q1Controller` / `Q1_Character`):
+
+- Middle mouse = the cyborg ability (`C_CyborgAbilityKeyboard`). Mouse wheel = beam power and sniper
+  zoom (`C_BeamPower`, `C_SniperZoom`). So no mouse button is free. A UE4SS key bind does not block
+  the game's own action, so Squad Tactics stays off the middle mouse button.
+- 1, 2, 3 = weapons; 4, 5, 6 = actions; 9 = photo mode; F1, F2, F5 = the game's squad order mode
+  (`SendOrderToSquad` 0/1/2). **7, 8, 0 and Z** are free on foot (Z is free look in a ship only; the
+  orders work on foot only, as Silent Ops' F3/F4). Arrow keys, Insert, Home, End, PageDown are free
+  too but far from WASD.
+- A held key can be read: `PlayerController:IsInputKeyDown({KeyName = FName("Z")})`, as Silent Ops'
+  Shift guard does (verified in game). Read only while the order menu is up.
+- The game's own input events are hookable Blueprint functions on `Q1_Character_C`
+  (`InpActEvt_C_SniperZoom_…`, `InpActEvt_GPC_Order1_…` and so on): the way in for the mouse wheel
+  and for a gamepad, if needed.
+
+**Menu and marker on screen:** draw on the HUD canvas in a post-hook of `Q1Hud_C:ReceiveDrawHUD`, as
+Ground Waypoints does (`Project` for world-to-screen, `DrawRect`, `DrawText`; no out parameters).
+Debug drawing is compiled out of the shipping game. The list sits next to the crosshair; a marker
+sits on the aimed spot; a small dot in the team's colour sits over each selected soldier. Hidden in
+photo mode and when the game hides its indicators. The set's one-line message (`hudmsg`) confirms
+each order.
+
+**Doors:** the aim trace (one reused, cleared out table, as 0.1.0) returns the hit actor. Dungeon
+interior doors are DungeonFlow Blueprints (`DoorBase_C`, `New_Door_C`, `OneWayDoor_C`, `Door_1_C` to
+`Door_4_C`, `EBP_LockDoor_C`, with `Open` / `Close` and an overlap box); dungeon entrance gates are
+`Q1_DungeonDoor_C` and its children (`CPP_DungeonDoor`). A doorway without a door: the hit is a wall
+next to an opening, found with two traces along the wall that find its edges (80-300 cm wide). Still
+to check in game: which classes the station and outpost doors have (probe: log the hit actor's class
+and component while walking through doors).
+
+**Holding a spot while still fighting (the key finding):** a squad soldier follows a formation slot.
+Its `GoalRM` is one of your `SquadLocations` (child actor components on you) and `GoalActor` that
+slot's actor. Every 1.5 s its battle timer (`MainTimer` → `UpdateBattle`) sends it back along a path
+when it is more than 7 m from `GoalRM`, and between those checks it targets and shoots as usual. So
+"hold here", "move here" and "cover him" can point `GoalRM` / `GoalActor` at an anchor (a small
+invisible actor of ours with a child actor component) at the spot, or attached to the ally, with
+the battle timer running: the game's own AI keeps the soldier within 7 m of the spot and fights.
+"Fall in" puts your slot back. No pausing, no re-moving by us. To test: whether the game puts its
+slot back on its own (on a crew update or a load); if so we re-point it each tick (one property read).
+
+**Finish the downed:** HTR keeps knocked-out enemies down and lets only your hits and pirates kill
+them. The order needs a small HTR addition (`HTR.isDown(npc)` and a "finish" mark that lets a squad
+hit kill that body); without HTR the order is not offered.
+
+### 8.2 Keys (keyboard)
+
+| Key | Action |
+|---|---|
+| **Z tap** | The order that fits what you aim at, at once (floor: move here; door: stack up; downed enemy: finish; ally: cover him; nothing or the sky: fall in) |
+| **Z hold** | Order list at the aimed spot. Move the mouse up and down to pick (the view holds still while Z is down; the mouse wheel too if its game event can be read), left and right to change who. Let go of Z to give it |
+| **0** | Who: All (gold) → Red → Blue → 1 soldier → 2 soldiers (the ones nearest the spot). Shown at the screen edge |
+| **0 while holding Z** | The order waits for your go. With orders waiting, a Z tap means **Go** |
+| **Shift+Z** | Same as Z, so orders work while you sprint |
+
+Shift+0 stays Ammo Discipline's. Silent Ops' F3 quiet orders stay: the last order wins for each
+soldier (a shared table both mods check: Silent Ops 0.3.8 skips soldiers Squad Tactics has an order
+for, and an F3 order frees them from Squad Tactics).
+
+Gamepad: the game's own pad events can be hooked (the D-pad order mode is `GPC_Order1/2/3`), so a pad
+layout is possible. Only if the user plays on foot with a pad; to be planned with a pad test.
+
+### 8.3 Orders
+
+| Order | What the selected soldiers do |
+|---|---|
+| **Move here** | Each to its own spot around the point (spread on a short arc, traced so no spot is inside a wall), facing the way you looked. Then they hold there and fight there (8.1) |
+| **Hold & cover here** | As Move here, crouched, each watching its own sector of the way you looked |
+| **Stack up** | On your side of the door, against the wall on both sides of the frame, facing the door |
+| **Stack & clear** | Stack up, then on Go (or at once) the first two go through to the room's corners (traces into the room), the rest cover the doorway; "room clear" when nobody shoots for a few seconds; then they hold in the room. Silent Ops' search spots can be reused |
+| **Lead the way** | 0.1.0's bounding overwatch for the selection |
+| **Fall in** | Back to the game's follow (cancels any order) |
+| **Cover me / him** | The anchor rides on you or the aimed ally: they keep within 7 m and fight |
+| **Finish him** | One soldier goes to a few metres from the downed enemy and shoots it (HTR needed) |
+| **Patrol** | Later: points set from the list, walked out of a fight |
+
+**Lead the way** stays on by default: with no other order, two soldiers lead as in 0.1.0 (the Red
+team). Any order to them takes them out of it; "Lead the way" from the list puts it back; "Fall in"
+for everyone turns it off. 0 no longer switches it.
+
+**Better squad movement** (the user: improve the NPCs' movement limits), for every order: path-found
+moves (verified on the station deck), each soldier its own spot (no crowding), run when far and walk
+when close, crouch at holding spots, face the given way (verified), and when a soldier makes no
+progress for 2 s, a new path to the next free spot.
+
+### 8.4 Costs
+
+Per frame only while Z is held: one held-key read, the view hold (get and set the control rotation)
+and the list drawn (a few `DrawText` / `DrawRect`). Markers of active orders: one `Project` each per
+frame. Orders: one aim trace, a few spot traces per order, the 0.5 s tick as 0.1.0. No `LoopAsync`,
+no per-frame out-parameter calls.
+
+### 8.5 Test plan
+
+1. Probe run: `GoalRM` / `GoalActor` on an anchor (do they hold there and fight; does the game
+   put the slot back), Z held read, list and marker drawn on the HUD, the hit class of station and
+   dungeon doors.
+2. Build, then a scripted run per order (move, hold, stack and clear, cover, fall in, queue and go)
+   and screenshots of the list and a stack-up for the README.
