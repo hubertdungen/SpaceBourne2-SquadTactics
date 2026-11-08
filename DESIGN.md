@@ -17,27 +17,42 @@ investigate a room or an area; cover me or my friends; all varying with each sol
   mode). The squad list comes from one `FindAllOf` (about 100 ms, measured), only when pointmen are
   missing: right after a load every 5 s up to four times while the squad is not there yet, then at
   most every `ScanSeconds`.
-- **Taking control:** the soldier's battle logic timer (`MainTimer`) is paused with
-  `KismetSystemLibrary.K2_PauseTimerHandle`, as Silent Ops' quiet orders do; otherwise its own logic
-  pulls it back to you. Released: timer running, uncrouched, ALS rotation mode restored, movement
-  stopped.
+- **Taking control:** while a pointman moves to its spot and watches there, the soldier's battle
+  logic timer (`MainTimer`) is paused with `KismetSystemLibrary.K2_PauseTimerHandle`, as Silent Ops'
+  quiet orders do; otherwise its own logic pulls it back to you. The pause is checked every tick
+  (`K2_IsTimerPausedHandle`) and set again if the game restarted the timer. A pointman with no spot to
+  go to (no spot twice in a row, or a move that failed) runs the game's logic again: it follows you
+  and fights until it gets a spot (0.1.1; 0.1.0 left it paused, standing still: the dungeon report).
+  Released: timer running, uncrouched, ALS rotation mode restored, movement stopped.
 - **Heading:** your velocity when you move, else your control rotation.
 - **Spot:** `Distance` (900) ahead for the first pointman, `SecondDistance` (600) for the second, or
   `Leapfrog` (400) past the other pointman, at most `MaxLead`. Trace 1 along your heading: a wall
   closer than that shortens the spot to the wall minus `WallGap`, and closer than `MinLead` means
   wait. Trace 2 to the pointman's side (first left, second right) up to `SideSearch`: a wall there
   puts the spot against it (minus `WallGap`), else `SideOffset` off your line.
+- **Traces** (0.1.1): visibility channel. A hit within 75 cm of a squad soldier is that soldier: the
+  trace goes on 90 cm past it (up to three times), so your squad crowding a corridor is not taken for
+  a wall (test 27: a soldier 1 m ahead stopped the visibility and camera channels alike; 0.1.0 then
+  found "a wall right ahead" and waited, paused). Tracing by object type (`LineTraceSingleForObjects`
+  with WorldStatic + WorldDynamic) never hit anything, not even corridor walls: UE4SS 3.0.1 does not
+  pass the array of object types.
 - **Move:** `AIController.MoveToLocation(spot, 60, ..., bUsePathfinding = true, project = true)`;
-  when that fails (result 0), the same without pathfinding: a straight move. Gait running when you
-  move faster than `RunAbove`, else walking.
+  when that fails (result 0), a path half way there; then the same without pathfinding: a straight
+  move. Gait running when you move faster than `RunAbove`, else walking.
 - **Hold:** arrived within `ArriveRadius`, or the move stopped, or `MoveTimeout`: crouch, ALS looking
   direction, actor and control rotation set to your heading.
 - **Leapfrog:** one pointman moves at a time. The one least ahead of you moves on when it is less
   than `LeapWhenAhead` ahead (you caught up, or you turned), it has held `MinHoldSeconds`, and you
   moved `YouMoved` since its last move (without that, one that stopped short of its spot moved
   again and again while you stood: test 24).
-- **Fights:** a hook on every NPC shot within `CombatRange` of you, your shots and your squad's
-  releases the pointmen for `CombatSeconds`.
+- **Fights:** releases the pointmen for `CombatSeconds`: your shots; an NPC's shot from within
+  `CombatRange` (3000) of you or a pointman; a squad soldier's shot (`BattleShoot`, `PistolShot`) at a
+  target (`C_Target`) that close. The game calls `BattleShoot` every 1.5 s while a soldier sees a
+  target, however far: 0.1.0 counted those at any range, and in a dungeon full of creatures the
+  pointmen hardly ever led.
+- **Floors:** a pointman more than `FloorHeight` (350) above or below you goes back to the squad.
+- **Squad list:** read again (one `FindAllOf`, about 50 ms) only when nobody usable is left on it;
+  0.1.0 read it every time the pointmen came back after a fight (a visible hitch, test 27).
 - **Off foot** (ship, hoverbike, menus) or the order off: pointmen released.
 
 ### Verified in game (2026-11-08)
@@ -51,8 +66,11 @@ investigate a room or an area; cover me or my friends; all varying with each sol
 - Test 24: two pointmen out of a squad of four, leapfrogging 6-9 m ahead as you stepped forward,
   "against a wall" or "open side" as expected; traces with the cleared table worked; 0.4-0.7 ms per
   tick (every 0.5 s), the squad scan about 100 ms once.
-- Not yet in game: the fixes of section 2 (no re-move while you stand, faster first scan) and the
-  hand-back on enemy fire (test 24b stalled at the main menu with the screen off).
+- Tests 27-29 (0.1.1, station corridor, the squad teleported in a crowd 1-3 m in front of you): the
+  pointmen led along the corridor and back, against the walls, past soldiers in the trace, 0 failed
+  moves; an enemy shot 18 m away released them and they led again 12 s later without a squad scan;
+  0.4-0.6 ms a tick. A dungeon could not be reached by script: the test level's space dungeon door
+  (`C_SpaceDungeonDoor_C`, role 0) ran `Interacting` but no dungeon loaded.
 
 ## 3. Costs and UE4SS 3.0.1 rules
 

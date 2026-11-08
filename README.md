@@ -30,8 +30,12 @@ works alone or with the rest of the realism set.
 
 ### Fights come first
 
-- **Gunfire hands them back.** Your shots, your squad's, or an enemy's within 50 m: the pointmen go
-  back to the game's own combat AI for a while, then take the lead again.
+- **Gunfire hands them back.** Your shots, an enemy's within 30 m of you or a pointman, or your
+  squad's at a target that close: the pointmen go back to the game's own combat AI for a while, then
+  take the lead again.
+- **Never left standing.** A pointman with nowhere to go (a wall right ahead, no way through) follows
+  you and fights as usual until it finds its next spot. Your squad crowding a narrow corridor does
+  not stop them: soldiers in the way are not taken for walls.
 - **Only on foot.** In a ship or on the hoverbike nothing changes.
 
 ### On by default
@@ -81,6 +85,7 @@ Edit `Mods\SquadTactics\scripts\config.lua` (every line is optional):
 - `Lead.SideOffset`, `Lead.SideSearch`, `Lead.WallGap` — how they pick their side of the corridor.
 - `Lead.Crouch` — crouch at the spot.
 - `Lead.CombatRange`, `Lead.CombatSeconds` — when gunfire hands them back to the game's combat AI.
+- `Lead.MaxRange`, `Lead.FloorHeight` — a pointman this far away, or on another floor, goes back to the squad.
 - `Lead.StartOn`, `Lead.Key`, `Messages`.
 
 ## Known limits
