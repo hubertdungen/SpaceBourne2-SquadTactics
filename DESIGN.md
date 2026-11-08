@@ -176,8 +176,12 @@ when it is more than 7 m from `GoalRM`, and between those checks it targets and 
 "hold here", "move here" and "cover him" can point `GoalRM` / `GoalActor` at an anchor (a small
 invisible actor of ours with a child actor component) at the spot, or attached to the ally, with
 the battle timer running: the game's own AI keeps the soldier within 7 m of the spot and fights.
-"Fall in" puts your slot back. No pausing, no re-moving by us. To test: whether the game puts its
-slot back on its own (on a crew update or a load); if so we re-point it each tick (one property read).
+"Fall in" puts your slot back. No pausing, no re-moving by us. Verified (test 30): one soldier's
+`GoalRM` / `GoalActor` pointed at a `TargetPoint` with an added `ChildActorComponent` where you
+stood, then you walked 12 m on: 10 s later it was 2.7 m from the anchor and 13.9 m from you, battle
+timer running, slot still ours; another soldier had followed you (2.1 m). Still to watch: whether the
+game puts the slot back on its own (crew update, load); if so we re-point it each tick (one property
+read).
 
 **Finish the downed:** HTR keeps knocked-out enemies down and lets only your hits and pirates kill
 them. The order needs a small HTR addition (`HTR.isDown(npc)` and a "finish" mark that lets a squad
