@@ -12,7 +12,8 @@
       (8 m in 5 s), so pathfinding is tried first and the straight line second;
     - facing: ALS looking-direction mode + actor and control rotation: held its heading;
     - spots: line traces, one reused out table cleared before each call (a second call with the
-      filled table failed); at most two traces per move.
+      filled table failed); at most three traces per move (ahead, side, and the straight line when
+      there is no path).
   Any gunfire near you (yours, the squad's, an NPC's within Lead.CombatRange) hands the pointmen back
   to the game's own combat AI for Lead.CombatSeconds.
 ]]
@@ -188,7 +189,19 @@ local function moveTo(m, spot, now, run)
     local r = -1
     pcall(function() r = c:MoveToLocation(spot, 60.0, true, true, true, false, nil, true) end)
     if r ~= G.Move.Success and r ~= G.Move.AlreadyAtGoal then
-        -- no navigation data here (station decks): a straight move (test 23b)
+        -- no path here (station decks, test 23): a straight move (test 23b), but only as far as the line
+        -- from the pointman to the spot is clear, so it does not walk into a corner
+        local from = U.location(m.obj)
+        if not from then return false end
+        local a = { X = from.X, Y = from.Y, Z = from.Z + 40 }
+        local h = trace(a, { X = spot.X, Y = spot.Y, Z = a.Z })
+        if h == nil then return false end
+        if h then
+            local len = U.dist2(from, spot)
+            local keep = h - (cfg().WallGap or 80)
+            if keep < 150 or len < 1 then return false end
+            spot = { X = from.X + (spot.X - from.X) * keep / len, Y = from.Y + (spot.Y - from.Y) * keep / len, Z = spot.Z }
+        end
         pcall(function() r = c:MoveToLocation(spot, 60.0, true, false, false, false, nil, true) end)
     end
     if r ~= G.Move.Success and r ~= G.Move.AlreadyAtGoal then return false end

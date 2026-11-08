@@ -89,3 +89,17 @@ combat AI on the first shot. Silent Ops' awareness stays in charge of who sees y
 
 `0` (plain zero): free in the set's key plan (Ground Waypoints only suggests it as an optional
 toggle; Shift+0 is Ammo Discipline's and stays quiet, UE4SS matches modifiers exactly).
+
+## 7. Pathfinding on the station deck (open question, 2026-11-08)
+
+- Squad soldiers: `MoveToLocation` with pathfinding returned 0 on the test save's station deck, with
+  and without projecting the goal; a straight move worked. Silent Ops' investigation and Get Out of
+  the Way's side steps use the same call with pathfinding on enemy and station NPCs and work there
+  (Get Out of the Way also measures the path with `FindPathToLocationSynchronously`).
+- Candidates: no navigation mesh on that deck (it is a landing pad outside), a nav agent of the
+  squad soldiers that the mesh does not support, or their controller (`QQ_ALSAIController`).
+- Probe ready for a run with the screen on: `dev/st_probe9.lua` (calc kit) compares a squad soldier
+  and an enemy spawned next to it: on the mesh or not, a path 8 m ahead (valid, partial, length),
+  and the move result for each.
+- Meanwhile a straight move goes only as far as the line from the pointman to its spot is clear
+  (one more trace), so it stops before a corner instead of walking into it.
