@@ -26,6 +26,8 @@ works alone or with the rest of the realism set.
   watching. Run, and they run to the next spot.
 - **The rest of the squad** follows you as usual.
 
+![Two pointmen crouched against a wall ahead of you](docs/pointmen.jpg)
+
 ### Fights come first
 
 - **Gunfire hands them back.** Your shots, your squad's, or an enemy's within 50 m: the pointmen go

@@ -20,6 +20,7 @@ return {
         LeapWhenAhead  = 350,    -- you are this close behind a pointman: it moves on...
         YouMoved       = 200,    -- ...once you have moved this far since its last move
         MinHoldSeconds = 1.5,    -- a pointman watches at least this long before moving on
+        RetrySeconds   = 2,      -- no spot found (a wall right ahead): tries again after this
         SideOffset     = 150,    -- off your line, to its side, when there is no wall to hug
         SideSearch     = 400,    -- how far to the side a wall is looked for
         WallGap        = 80,     -- distance kept from walls

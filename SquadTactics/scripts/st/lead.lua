@@ -282,7 +282,8 @@ function L.tick(now)
                                 -- moves on only once you have moved since its last move (one that stopped short of its
                 -- spot, blocked or timed out, would otherwise move again and again while you stand)
                 local youMoved = not m.leapFrom or U.dist2(pos, m.leapFrom) > (c.YouMoved or 200)
-                if (m.state == "idle" or (ahead < (c.LeapWhenAhead or 350) and youMoved)) and (not least or ahead < least) then
+                local waiting = m.retryAt and now < m.retryAt -- no spot last time (a wall right ahead): wait a bit
+                if not waiting and (m.state == "idle" or (ahead < (c.LeapWhenAhead or 350) and youMoved)) and (not least or ahead < least) then
                     pick, least = m, ahead
                 end
             end
@@ -308,7 +309,7 @@ function L.tick(now)
             if spot and moveTo(pick, spot, now, speed > (c.RunAbove or 250) or pick.state == "idle") then
                 U.log(string.format("pointman %s moves %.1f m ahead (%s)", tostring(pick.a), lead / 100, cover and "against a wall" or "open side"))
             else
-                pick.since = now -- try again later
+                pick.since, pick.retryAt = now, now + (c.RetrySeconds or 2) -- try again later, not every tick
             end
         end
     end

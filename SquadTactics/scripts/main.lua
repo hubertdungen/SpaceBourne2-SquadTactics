@@ -19,7 +19,7 @@ local U = require("st.util")
 local defaults = {
     Enabled = true,
     Lead = { StartOn = true, Key = "0", Pointmen = 2, Distance = 900, SecondDistance = 600, Leapfrog = 400,
-        MaxLead = 1600, MinLead = 250, LeapWhenAhead = 350, YouMoved = 200, MinHoldSeconds = 1.5, SideOffset = 150, SideSearch = 400,
+        MaxLead = 1600, MinLead = 250, LeapWhenAhead = 350, YouMoved = 200, MinHoldSeconds = 1.5, RetrySeconds = 2, SideOffset = 150, SideSearch = 400,
         WallGap = 80, ArriveRadius = 120, MoveTimeout = 8, RunAbove = 250, Crouch = true, MaxRange = 4000,
         CombatRange = 5000, CombatSeconds = 12, TickSeconds = 0.5, ScanSeconds = 20 },
     Messages = true,

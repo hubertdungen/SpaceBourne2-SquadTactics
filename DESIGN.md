@@ -103,3 +103,9 @@ toggle; Shift+0 is Ammo Discipline's and stays quiet, UE4SS matches modifiers ex
   and the move result for each.
 - Meanwhile a straight move goes only as far as the line from the pointman to its spot is clear
   (one more trace), so it stops before a corner instead of walking into it.
+- Answered (test 25, after a PC restart): the squad soldier is on the mesh, a path 8 m ahead is valid
+  (not partial, 800 cm) and `MoveToLocation` with pathfinding returns 2. The earlier failures came
+  with a broken game state (every launch from 04:42 stalled or crashed until the restart). The
+  straight move stays as the fallback. The same run verified the hand-back on enemy fire and that
+  pointmen stay put while you stand; with a wall right ahead the first pointman retried every tick
+  (2.5 ms), so a failed spot now waits `RetrySeconds` (2 s).
