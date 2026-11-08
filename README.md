@@ -1,3 +1,5 @@
+![Squad Tactics](docs/banner.png)
+
 # Squad Tactics — your squad leads the way in SpaceBourne 2
 
 In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squad Tactics, one or two
