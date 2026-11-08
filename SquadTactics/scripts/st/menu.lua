@@ -49,14 +49,17 @@ function M.press(now)
     M.aim = O.aim(pc, p)
     M.items, M.def = O.menuFor(M.aim)
     M.idx = 1
+    U.log(string.format("key: Z down (fits: %s; list: %s)", tostring(M.def), table.concat(M.items, ",")))
 end
 
 -- 0 pressed
 function M.who(now)
     if M.down then
         M.queued = not M.queued
+        U.log("key: 0 with Z held: on your go = " .. tostring(M.queued))
         return
     end
+    U.log("key: 0")
     O.cycleWho(now)
 end
 
@@ -67,6 +70,8 @@ end
 
 local function release(now)
     M.down = false
+    U.log(string.format("key: Z up after %.2f s, list %s, picked %s", now - (M.at or now), M.open and "open" or "closed",
+        tostring(M.open and M.items[M.idx] or (#O.queue > 0 and not M.queued and "go") or M.def)))
     if M.demoUntil then -- scripted test: the list was only shown
         M.demoUntil, M.open = nil, false
         return
@@ -101,6 +106,7 @@ local function steer(pc)
 end
 
 local function openList(pc, now)
+    U.log("key: Z held: list open")
     M.open = true
     M.accP, M.accY = 0, 0
     pcall(function() local x = pc:GetControlRotation(); M.frozen = { Pitch = x.Pitch, Yaw = x.Yaw, Roll = 0 } end)
