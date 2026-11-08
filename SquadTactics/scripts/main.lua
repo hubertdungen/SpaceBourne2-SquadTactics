@@ -73,8 +73,9 @@ local function squadShot(self)
     pcall(function() a = self:get() end)
     if not U.valid(a) then return end
     local t = U.get(a, G.P.Target, nil)
-    local at = U.valid(t) and U.location(t) or U.location(a)
-    if at then L.combat(os.clock(), at, "squad shot") end
+    if not U.valid(t) then return end -- the game shoots only with a target; none readable: not counted
+    local at = U.location(t)
+    if at then L.combat(os.clock(), at, "squad shot at " .. tostring(U.className(t))) end
 end
 H.add(G.Fn.NpcShot, npcShot, "npc shot")
 H.add(G.Fn.SquadShot, squadShot, "squad shot")

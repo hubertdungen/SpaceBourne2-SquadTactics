@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.1.1 — 2026-11-08
+
+- **Lead the way works in dungeons.** In a dungeon the pointmen stood still or moved about 1 m.
+  - A pointman that has no spot to go to now follows you and fights the game's way until it finds one. Before, it stood still and stayed out of the fight.
+  - The spots are found against walls and doors only. Your squad crowding a narrow corridor no longer counts as a wall.
+  - A squad soldier's shot counts as a fight only when its target is within `CombatRange` of you or a pointman. Before, any shot of your squad at anything, however far away, sent the pointmen back to the game's AI. In a dungeon full of creatures they hardly ever led.
+- A pointman on another floor (lifts, stairs) goes back to the squad (`FloorHeight`).
+- When a path to the spot fails, the pointman tries half way there before the straight move.
+- The game sometimes restarts a pointman's battle timer; it is now paused again.
+- `CombatRange` default 3000 (was 5000).
+- With `Debug.Log` on, the log says why a pointman did not move.
+
 ## 0.1.0 — 2026-11-08
 
 - First version: the **"Lead the way"** order (bounding overwatch). One or two squad soldiers go

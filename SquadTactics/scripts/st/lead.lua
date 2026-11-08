@@ -13,9 +13,9 @@
     - MoveToLocation with pathfinding first, then half way, then a straight move as far as the line
       to the spot is clear;
     - facing: ALS looking-direction mode + actor and control rotation: held its heading;
-    - spots: line traces against walls and doors only (0.1.1: your squad crowding a dungeon corridor
-      no longer counts as a wall), one reused out table cleared before each call (a second call with
-      the filled table failed); at most four traces per move.
+    - spots: line traces; a hit on one of your squad is stepped over (0.1.1: your squad crowding a
+      dungeon corridor no longer counts as a wall); one reused out table cleared before each call (a
+      second call with the filled table failed); a few traces per move.
   Gunfire near you or the pointmen (yours, an NPC's, a squad soldier's at a target within
   Lead.CombatRange) hands the pointmen back to the game's own combat AI for Lead.CombatSeconds.
 ]]
@@ -25,7 +25,7 @@ local G = require("st.gamedefs")
 local P = G.P
 
 local L = { on = true, men = {}, squad = {}, scanAt = -1e9, combatUntil = 0, player = nil, playerA = nil,
-    traceMode = 1, traceFresh = false, stats = { ticks = 0, time = 0, max = 0, moves = 0, traces = 0, fails = 0 } }
+    traceFresh = false, tickNo = 0, stats = { ticks = 0, time = 0, max = 0, moves = 0, traces = 0, fails = 0, skipped = 0 } }
 
 local function cfg() return SQUAD_TACTICS.cfg.Lead end
 
@@ -67,48 +67,74 @@ end
 
 local function dz(a, b) return math.abs((a.Z or 0) - (b.Z or 0)) end
 
--- Line trace from a to b: the distance to the first hit (cm), false if clear, nil if the trace failed.
--- Modes: 1 = walls and doors only (object types WorldStatic + WorldDynamic, so people do not count:
--- your squad crowds a dungeon corridor), 2 = the camera channel (people usually ignore it),
--- 3 = the visibility channel (0.1.0). A mode the game refuses falls back to the next one.
+-- Line trace from a to b on the visibility channel: the distance to the first wall (cm), false if
+-- clear, nil if the trace failed. People are not walls: your squad crowding a dungeon corridor stopped
+-- 0.1.0's traces right in front of you (test 27: a soldier 1 m ahead stopped the visibility and the
+-- camera channel alike). A hit next to a squad soldier is stepped over and the trace goes on behind it.
+-- (Tracing for walls and doors by object type does not work here: UE4SS 3.0.1 does not pass the array
+-- of object types, and that trace never hit anything, test 27.)
 -- One reused OutHit table, cleared before each call (UE4SS 3.0.1 keeps every table passed as an out
 -- parameter; and a second call with the filled table failed in test 23b). If even that fails, a new
--- table per call (traces are rare: at most four per move).
+-- table per call (traces are rare: a few per move).
 local HIT = {}
 local WHITE = { R = 1, G = 1, B = 1, A = 1 }
-local OBJECTS = { 0, 1 } -- EObjectTypeQuery: WorldStatic, WorldDynamic
-local MODES = { "walls and doors", "camera channel", "visibility channel" }
-local function traceCall(lib, a, b, out)
-    if L.traceMode == 1 then
-        return lib:LineTraceSingleForObjects(L.player, a, b, OBJECTS, false, {}, 0, out, true, WHITE, WHITE, 0.0)
-    end
-    return lib:LineTraceSingle(L.player, a, b, L.traceMode == 2 and 1 or 0, false, {}, 0, out, true, WHITE, WHITE, 0.0)
-end
-local function trace(a, b)
-    local lib = ksl()
-    if not lib or not U.valid(L.player) then return nil end
-    L.stats.traces = L.stats.traces + 1
-    for _ = 1, 4 do
+local PERSON, STEP = 75, 90 -- a hit this close (cm, sideways) to a soldier is that soldier; go on this far past it
+local function rawTrace(lib, a, b)
+    for _ = 1, 2 do
         local out = HIT
         if L.traceFresh then out = {} else for k in pairs(HIT) do HIT[k] = nil end end
-        local ok, hit = pcall(traceCall, lib, a, b, out)
+        L.stats.traces = L.stats.traces + 1
+        local ok, hit = pcall(function()
+            return lib:LineTraceSingle(L.player, a, b, 0, false, {}, 0, out, true, WHITE, WHITE, 0.0)
+        end)
         if ok then
             if hit ~= true then return false end
             local d
             pcall(function() d = out.Distance end)
             return type(d) == "number" and d or false
         end
-        if L.traceMode < 3 then
-            L.traceMode = L.traceMode + 1
-            U.warn("trace refused (" .. tostring(hit) .. "); now tracing on the " .. MODES[L.traceMode])
-        elseif not L.traceFresh then
-            L.traceFresh = true
-            U.warn("reused trace table refused; using a new one per trace")
-        else
-            return nil
-        end
+        if L.traceFresh then return nil end
+        L.traceFresh = true
+        U.warn("reused trace table refused; using a new one per trace")
     end
     return nil
+end
+-- squad soldiers' positions, read once per tick when a trace needs them
+local function people()
+    if L.peopleTick ~= L.tickNo then
+        L.peopleTick, L.peopleAt = L.tickNo, {}
+        for _, s in ipairs(L.squad) do
+            local l = U.alive(s.obj, s.a) and U.location(s.obj) or nil
+            if l then L.peopleAt[#L.peopleAt + 1] = l end
+        end
+    end
+    return L.peopleAt
+end
+local function personAt(x, y, z)
+    for _, l in ipairs(people()) do
+        if (x - l.X) ^ 2 + (y - l.Y) ^ 2 < PERSON * PERSON and math.abs(z - l.Z) < 120 then return true end
+    end
+    return false
+end
+local function trace(a, b)
+    local lib = ksl()
+    if not lib or not U.valid(L.player) then return nil end
+    local dx, dy, dzz = b.X - a.X, b.Y - a.Y, b.Z - a.Z
+    local len = math.sqrt(dx * dx + dy * dy + dzz * dzz)
+    if len < 1 then return false end
+    local ux, uy, uz = dx / len, dy / len, dzz / len
+    local done, from = 0, a
+    for _ = 1, 4 do
+        local d = rawTrace(lib, from, b)
+        if not d then return d end
+        local at = done + d
+        if not personAt(a.X + ux * at, a.Y + uy * at, a.Z + uz * at) then return at end
+        L.stats.skipped = (L.stats.skipped or 0) + 1
+        done = at + STEP
+        if done >= len then return false end
+        from = { X = a.X + ux * done, Y = a.Y + uy * done, Z = a.Z + uz * done }
+    end
+    return done
 end
 
 -- You, on foot (nil in a ship or a menu).
@@ -286,24 +312,25 @@ end
 -- Gunfire near you or a pointman: the squad fights the game's way for a while. pos = where the shot
 -- comes from or goes to; nil = always (your own shots).
 function L.combat(now, pos, what)
+    local dmin
     if pos and L.player and U.valid(L.player) then
-        local range = cfg().CombatRange or 3000
         local me = U.location(L.player)
-        local near = me and U.dist2(me, pos) <= range
-        if not near then
-            for _, m in ipairs(L.men) do
-                local l = U.location(m.obj)
-                if l and U.dist2(l, pos) <= range then near = true; break end
-            end
+        if me then dmin = U.dist2(me, pos) end
+        for _, m in ipairs(L.men) do
+            local l = U.location(m.obj)
+            if l and (not dmin or U.dist2(l, pos) < dmin) then dmin = U.dist2(l, pos) end
         end
-        if not near then return end
+        if not dmin or dmin > (cfg().CombatRange or 3000) then return end
     end
     L.combatUntil = now + (cfg().CombatSeconds or 12)
-    if #L.men > 0 then L.releaseAll("gunfire (" .. tostring(what or "?") .. ")") end
+    if #L.men > 0 then
+        L.releaseAll(string.format("gunfire (%s%s)", tostring(what or "?"), dmin and string.format(", %.0f m", dmin / 100) or ""))
+    end
 end
 
 function L.tick(now)
     local t0 = os.clock()
+    L.tickNo = L.tickNo + 1
     local c = cfg()
     local p = playerOnFoot()
     L.player = p
@@ -321,7 +348,8 @@ function L.tick(now)
             keep[#keep + 1] = m
         else
             release(m)
-            U.log("pointman " .. tostring(m.a) .. " released: " .. (l and "too far or another floor" or "gone or down"))
+            U.log(string.format("pointman %s released: %s", tostring(m.a), l and string.format("%.1f m away, %.1f m above or below",
+                U.dist2(l, pos) / 100, dz(l, pos) / 100) or "gone or down"))
         end
     end
     L.men = keep
@@ -427,10 +455,10 @@ end
 
 function L.report()
     local s = L.stats
-    local r = string.format("lead: %d ticks avg %.2f ms max %.2f ms, %d moves, %d failed, %d traces (%s), %d pointmen, on=%s",
+    local r = string.format("lead: %d ticks avg %.2f ms max %.2f ms, %d moves, %d failed, %d traces (%d past a soldier), %d pointmen, on=%s",
         s.ticks, s.ticks > 0 and s.time / s.ticks * 1000 or 0, s.max * 1000, s.moves, s.fails, s.traces,
-        MODES[L.traceMode], #L.men, tostring(L.on))
-    L.stats = { ticks = 0, time = 0, max = 0, moves = 0, traces = 0, fails = 0 }
+        s.skipped or 0, #L.men, tostring(L.on))
+    L.stats = { ticks = 0, time = 0, max = 0, moves = 0, traces = 0, fails = 0, skipped = 0 }
     return r
 end
 
