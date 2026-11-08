@@ -115,7 +115,11 @@ end, "order list")
 -- Timed work on the game thread: the HUD draw on foot and in a ship, the ALS tick as a fallback.
 GT.drive(GT.HUD_TICK, "hud")
 GT.drive(GT.FOOT_TICK, "foot")
-GT.boot(function() O.reset(); M.reset(); L.reset() end)
+GT.boot(function()
+    O.reset(); M.reset(); L.reset()
+    -- the squad list ready before the first order (one FindAllOf, ~50 ms, at load time not at the first Z)
+    if cfg.Orders.Enabled ~= false then GT.after(8, function(now) pcall(L.ensureSquad, now) end) end
+end)
 local reportAt = os.clock() + 30
 GT.every(cfg.Lead.TickSeconds or 0.5, function(now)
     local ok, err = pcall(L.tick, now)

@@ -312,6 +312,9 @@ local function roomSpots(a)
 end
 
 -- Moving and holding --------------------------------------------------------------------------------
+-- A path to the spot; none: a path to the order's centre (test 32: a spread spot behind a crate or
+-- inside a wall left a soldier standing still); none either: straight at the spot. The anchor (its
+-- slot) goes where it goes.
 local function goTo(m, spot, now, paused)
     local c = H().controllerOf(m.obj)
     if not c then return false end
@@ -321,8 +324,17 @@ local function goTo(m, spot, now, paused)
     pcall(function() m.obj:SetDesiredGait(G.Gait.Running) end)
     local r = -1
     pcall(function() r = c:MoveToLocation(spot, 60.0, true, true, true, false, nil, true) end)
+    if not H().moved(r) and m.centre and U.dist2(m.centre, spot) > 50 then
+        local c2 = m.centre
+        pcall(function() r = c:MoveToLocation(c2, 60.0, true, true, true, false, nil, true) end)
+        if H().moved(r) then
+            spot = { X = c2.X, Y = c2.Y, Z = c2.Z }
+            if U.valid(m.anchor) then pcall(function() m.anchor:K2_TeleportTo(spot, { Pitch = 0, Yaw = 0, Roll = 0 }) end) end
+            U.log("orders: no path to " .. tostring(m.a) .. "'s spot; it goes to the centre")
+        end
+    end
     if not H().moved(r) then pcall(function() r = c:MoveToLocation(spot, 60.0, true, false, false, false, nil, true) end) end
-    m.spot, m.phase, m.since = spot, "moving", now
+    m.spot, m.phase, m.since, m.lastPos, m.lastMoveAt = spot, "moving", now, U.location(m.obj), now
     return H().moved(r)
 end
 
@@ -412,6 +424,7 @@ function O.give(order, a, now, sel)
     for i, s in ipairs(sel) do
         local m = newMan(s, order, now)
         m.face, m.home = faces[i], spots[i]
+        m.centre = (order == "stack" or order == "clear") and nil or { X = a.at.X, Y = a.at.Y, Z = a.at.Z + 90 }
         if rooms and i <= 2 then m.room = rooms[i] end
         m.anchor, m.slot = spawnAnchor(spots[i])
         if m.slot then setSlot(m, m.slot, m.anchor) end
@@ -472,6 +485,14 @@ function O.tick(now)
             end
             if m.paused and H().timerPaused(m.obj) == false then H().setTimer(m.obj, false) end
             local l = U.location(m.obj)
+            if m.phase == "moving" and l and m.lastPos then
+                if U.dist2(l, m.lastPos) > 50 then m.lastPos, m.lastMoveAt = l, now
+                elseif now - m.lastMoveAt > 4 and m.centre and not m.triedCentre and U.dist2(m.spot, m.centre) > 50 then
+                    m.triedCentre = true
+                    U.log("orders: " .. tostring(m.a) .. " stuck; to the centre")
+                    goTo(m, m.centre, now, m.paused)
+                end
+            end
             if m.phase == "moving" then
                 local st
                 local ctl = H().controllerOf(m.obj)
