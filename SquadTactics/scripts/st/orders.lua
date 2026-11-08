@@ -96,16 +96,28 @@ function O.aim(pc, p)
 end
 
 -- What the aim is on: a door, one of your squad, a wall or the floor, or nothing.
-local function squadAt(at)
-    local best, bd
+-- One of your squad: the hit actor itself, or (hit actor not readable) a hit on a soldier's body,
+-- not on the floor at its feet (test 34: aiming at the floor next to a soldier gave "cover him").
+local function squadAt(at, actor)
+    local aa = actor and U.addr(actor)
+    for _, s in ipairs(L.squad) do
+        if aa and s.a == aa and U.alive(s.obj, s.a) then return s end
+    end
+    if actor then return nil end
     for _, s in ipairs(L.squad) do
         local l = U.alive(s.obj, s.a) and U.location(s.obj) or nil
-        if l then
-            local d = math.sqrt((l.X - at.X) ^ 2 + (l.Y - at.Y) ^ 2)
-            if d < 90 and math.abs(l.Z - at.Z) < 130 and (not bd or d < bd) then best, bd = s, d end
-        end
+        if l and math.sqrt((l.X - at.X) ^ 2 + (l.Y - at.Y) ^ 2) < 50 and at.Z > l.Z - 60 and at.Z < l.Z + 110 then return s end
     end
-    return best
+    return nil
+end
+
+-- a door Blueprint, or a part attached to one (the space dungeon gate's transmitter, test 34)
+local function isDoor(actor, cls)
+    if cls and G.Doors[cls] then return true end
+    local parent
+    pcall(function() parent = actor:GetAttachParentActor() end)
+    if not U.valid(parent) then pcall(function() parent = actor:GetOwner() end) end
+    return U.valid(parent) and G.Doors[U.className(parent) or ""] == true
 end
 
 function O.context(a)
@@ -113,10 +125,9 @@ function O.context(a)
     a.wall = a.normal and math.abs(a.normal.Z) < 0.5
     local cls = a.actor and U.className(a.actor)
     a.cls = cls
-    if cls and G.Doors[cls] then a.door = true end
-    local s = squadAt(a.at)
+    if a.actor and isDoor(a.actor, cls) then a.door = true end
+    local s = squadAt(a.at, a.actor)
     if s then a.ally = s.obj end
-    if not a.ally and a.actor and cls and cls ~= G.SquadShort and U.get(a.actor, P.CrewIndex, nil) ~= nil then a.ally = a.actor end
     if a.door then return "stack" end
     if a.ally then return "cover" end
     return "move"
