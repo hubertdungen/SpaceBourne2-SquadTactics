@@ -1,0 +1,115 @@
+[size=6][b]Squad Tactics — your squad leads the way in SpaceBourne 2[/b][/size]
+
+In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squad Tactics, one or two of your soldiers move ahead of you down a corridor or across a room, take a spot against the wall, crouch and watch forward, and leapfrog on as you catch up: one moves while the other keeps watching. When shooting starts, they fight the game's own way.
+
+[b]Links:[/b] [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics]GitHub[/url] · UE4SS Lua mod · works alone or with the rest of the realism set.
+[b]Install the whole realism set in one go:[/b] the [url=https://github.com/hubertdungen/SpaceBourne2-Realism]SpaceBourne 2 Realism installer[/url] ([url=https://www.nexusmods.com/spacebourne2/mods/11]Nexus[/url]).
+
+[line]
+[size=5][b]Features[/b][/size]
+
+[size=4][b]Lead the way[/b][/size]
+
+[list]
+[*][b]Pointmen.[/b] One or two soldiers of your ground squad (the nearest ones) go ahead of you along the way you are walking, about 6 and 9 m in front.
+[*][b]To cover, not to the middle.[/b] Each pointman goes to its side of the corridor and stops against the wall when there is one, short of any wall ahead.
+[*][b]Watching forward.[/b] At the spot they crouch and face the way you are going.
+[*][b]Leapfrogging.[/b] When you catch up with a pointman, it moves on past the other one, which keeps watching. Run, and they run to the next spot.
+[*][b]The rest of the squad[/b] follows you as usual.
+[/list]
+
+[size=4][b]Fights come first[/b][/size]
+
+[list]
+[*][b]Gunfire hands them back.[/b] Your shots, your squad's, or an enemy's within 50 m: the pointmen go back to the game's own combat AI for a while, then take the lead again.
+[*][b]Only on foot.[/b] In a ship or on the hoverbike nothing changes.
+[/list]
+
+[size=4][b]On by default[/b][/size]
+
+[list]
+[*]The order is on as soon as the mod is installed. Press [b]0[/b] to switch between "lead the way" and the game's normal "follow me".
+[/list]
+
+[line]
+[size=5][b]Requirements[/b][/size]
+
+[list]
+[*]SpaceBourne 2 (Steam), with a ground squad (recruit soldiers for your faction).
+[*][url=https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1]UE4SS 3.0.1[/url] (the realism installer installs it for you).
+[/list]
+
+[line]
+[size=5][b]Install[/b][/size]
+
+[b]A. SpaceBourne 2 Realism installer (recommended)[/b] Get it on [url=https://www.nexusmods.com/spacebourne2/mods/11]Nexus[/url] or [url=https://github.com/hubertdungen/SpaceBourne2-Realism/releases/latest]GitHub[/url]. Tick Squad Tactics and any other mods of the set: it installs UE4SS if you don't have it, switches the mods on and keeps them updated.
+
+[b]B. Manual[/b] (the zip on the [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics/releases]releases page[/url])
+[list=1]
+[*]Extract the zip into your game folder (...\SpaceBourne 2, the one with SpaceBourne2.exe). It creates SB2\Binaries\Win64\Mods\SquadTactics and switches itself on.
+[*]No UE4SS yet? Get [url=https://github.com/UE4SS-RE/RE-UE4SS/releases/tag/v3.0.1]RE-UE4SS 3.0.1[/url] and copy dwmapi.dll, UE4SS.dll and UE4SS-settings.ini into SpaceBourne 2\SB2\Binaries\Win64\.
+[/list]
+
+[b]Uninstall:[/b] untick Squad Tactics in the installer or delete the SquadTactics folder. Squad Tactics never writes to your saves.
+
+[line]
+[size=5][b]Controls[/b][/size]
+
+[list]
+[*][b]0[/b]: Lead the way on / off (off = the game's normal follow)
+[/list]
+
+The key follows the realism set's shared key plan and can be changed in scripts\config.lua.
+
+[line]
+[size=5][b]Settings[/b][/size]
+
+Edit Mods\SquadTactics\scripts\config.lua (every line is optional):
+
+[list]
+[*]Lead.Pointmen — 1 or 2 soldiers lead.
+[*]Lead.Distance, Lead.SecondDistance, Lead.Leapfrog, Lead.MaxLead — how far ahead they go.
+[*]Lead.LeapWhenAhead, Lead.YouMoved, Lead.MinHoldSeconds — when a pointman moves on.
+[*]Lead.SideOffset, Lead.SideSearch, Lead.WallGap — how they pick their side of the corridor.
+[*]Lead.Crouch — crouch at the spot.
+[*]Lead.CombatRange, Lead.CombatSeconds — when gunfire hands them back to the game's combat AI.
+[*]Lead.StartOn, Lead.Key, Messages.
+[/list]
+
+[line]
+[size=5][b]Known limits[/b][/size]
+
+[list]
+[*][b]No true cover map.[/b] The game gives mods no cover points, so a pointman picks "the side of the corridor, against the wall if there is one", found with a couple of line traces.
+[*][b]Straight moves where there is no navigation data[/b] (station decks): a pointman then walks in a straight line to its spot and stops early if something is in the way.
+[*][b]Silent Ops' quiet squad orders[/b] (F3) also steer the squad: use one or the other at a time.
+[/list]
+
+Design notes and plans (more orders, enemy patrols that leapfrog too): [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics/blob/main/DESIGN.md]DESIGN.md[/url]. Version history: [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics/blob/main/CHANGELOG.md]CHANGELOG.md[/url].
+
+[line]
+[size=5][b]The SpaceBourne 2 realism set[/b][/size]
+
+Separate mods that work alone or in any combination. The [url=https://github.com/hubertdungen/SpaceBourne2-Realism]SpaceBourne 2 Realism installer[/url] ([url=https://www.nexusmods.com/spacebourne2/mods/11]Nexus[/url]) installs the ones you tick and keeps them updated.
+
+[list]
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/4]Nexus[/url]): realistic ballistics, wounds and tactical AI. The core of the set.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-SilentOps]Silent Ops[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/6]Nexus[/url]): stealth, silent takedowns and suppressors.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics]Squad Tactics[/url][/b]: your squad leads the way, bounding from cover.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-AmmoDiscipline]Ammo Discipline[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/12]Nexus[/url]): carried ammo limits and scavenging, so every magazine counts.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-GearWithoutLevels]Gear Without Levels[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/7]Nexus[/url]): use gear above your level, with small handling penalties.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-TacticalFirstPerson]Tactical First Person[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/15]Nexus[/url]): first person on foot, weapons held up, aiming down the sights.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-TacticalEngineering]Tactical Engineering[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/10]Nexus[/url]): realistic deployable turrets.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-GetOutOfTheWay]Get Out of the Way[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/14]Nexus[/url]): NPCs step aside naturally when you walk through them.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-GroundWaypoints]Ground Waypoints[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/13]Nexus[/url]): planet waypoints on foot and on the hoverbike.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-FactionPower]Faction Power[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/9]Nexus[/url]): dungeons, strategic sales and missions earn your faction power.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-BiggerArmies]Bigger Armies[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/17]Nexus[/url]): twice the general slots for your faction's ground and space forces.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-ClearHUD]Clear HUD[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/16]Nexus[/url]): a reticle you can see and HUD colours of your choice.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-SplitControls]Split Controls[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/5]Nexus[/url]): separate vertical invert for ship and on foot, per device.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-HOTAS]SB2 HOTAS[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/8]Nexus[/url]): HOTAS, rudder pedals, triple screens and head tracking.
+[/list]
+
+[line]
+[size=5][b]License[/b][/size]
+
+MIT. See [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics/blob/main/LICENSE]LICENSE[/url].
