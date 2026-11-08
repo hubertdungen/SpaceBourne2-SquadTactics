@@ -1,12 +1,35 @@
-[size=6][b]Squad Tactics — your squad leads the way in SpaceBourne 2[/b][/size]
+[size=6][b]Squad Tactics — command your squad in SpaceBourne 2[/b][/size]
 
-In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squad Tactics, one or two of your soldiers move ahead of you down a corridor or across a room, take a spot against the wall, crouch and watch forward, and leapfrog on as you catch up: one moves while the other keeps watching. When shooting starts, they fight the game's own way.
+In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squad Tactics you give them orders the way Ready or Not does: pick everyone, a team or one soldier, aim at a spot and tell them what to do there (move, hold and cover, stack up on a door and clear the room). And while you walk, one or two of them lead the way: ahead of you down a corridor, against the wall, crouched and watching, leapfrogging on as you catch up. When shooting starts, they fight the game's own way.
 
-[b]Links:[/b] [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics]GitHub[/url] · UE4SS Lua mod · works alone or with the rest of the realism set.
+[b]Links:[/b] [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics]GitHub[/url] · [url=https://www.nexusmods.com/spacebourne2/mods/18]Nexus[/url] · UE4SS Lua mod · works alone or with the rest of the realism set.
 [b]Install the whole realism set in one go:[/b] the [url=https://github.com/hubertdungen/SpaceBourne2-Realism]SpaceBourne 2 Realism installer[/url] ([url=https://www.nexusmods.com/spacebourne2/mods/11]Nexus[/url]).
 
 [line]
 [size=5][b]Features[/b][/size]
+
+[size=4][b]Squad orders[/b][/size]
+
+[list]
+[*][b]Aim and tap Z.[/b] The order that fits what you aim at, given at once: the floor or a wall means [i]move here[/i], a door means [i]stack up[/i], one of your soldiers means [i]cover him[/i], the sky means [i]fall in[/i].
+[*][b]Hold Z for the list.[/b] The orders appear next to the crosshair. Move the mouse up and down to pick one, left and right to pick who gets it, and let go of Z to give it. The view stays still while you choose.
+[*][b]Who: 0.[/b] All (gold), the red team, the blue team, or the one or two soldiers nearest the spot. The teams are split by your crew order (red = the first two).
+[*][b]The orders:[/b]
+    - [i]Move here[/i]: each soldier to its own spot around the point, spread across your view.
+    - [i]Hold & cover[/i]: the same, then crouched, each watching its own part of the way you looked.
+    - [i]Stack up[/i]: on your side of the door, against the wall on both sides of the frame, facing it.
+    - [i]Stack & clear[/i]: stacked, then the first two go into the room to its corners while the rest cover the doorway; "Room clear" when nobody shoots for a few seconds.
+    - [i]Cover him[/i]: they keep close to that soldier wherever he goes.
+    - [i]Lead the way[/i]: those soldiers become the pointmen (see below).
+    - [i]Fall in[/i]: back to following you (cancels any order).
+[*][b]Still fighting.[/b] Soldiers on a spot keep fighting the game's own way and come back to their spot afterwards: the game's AI follows our spot instead of you. Crouched watchers get up and fight when shots come near them, and go back to watching when it is over.
+[*][b]Orders on your go.[/b] Press 0 while holding Z and the order waits; tap Z when you are ready and every waiting order starts at once (GO).
+[*][b]No spot out of reach.[/b] A soldier that cannot get to its spot goes to the middle of the order instead of standing still.
+[/list]
+
+[img]https://raw.githubusercontent.com/hubertdungen/SpaceBourne2-SquadTactics/main/docs/orders.jpg[/img]
+
+[img]https://raw.githubusercontent.com/hubertdungen/SpaceBourne2-SquadTactics/main/docs/hold-cover.jpg[/img]
 
 [size=4][b]Lead the way[/b][/size]
 
@@ -17,6 +40,8 @@ In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squa
 [*][b]Leapfrogging.[/b] When you catch up with a pointman, it moves on past the other one, which keeps watching. Run, and they run to the next spot.
 [*][b]The rest of the squad[/b] follows you as usual.
 [/list]
+
+[img]https://raw.githubusercontent.com/hubertdungen/SpaceBourne2-SquadTactics/main/docs/pointmen.jpg[/img]
 
 [size=4][b]Fights come first[/b][/size]
 
@@ -29,7 +54,7 @@ In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squa
 [size=4][b]On by default[/b][/size]
 
 [list]
-[*]The order is on as soon as the mod is installed. Press [b]0[/b] to switch between "lead the way" and the game's normal "follow me".
+[*]"Lead the way" is on as soon as the mod is installed. "Fall in" for everyone from the order list switches it off; "Lead the way" from the list switches it on again.
 [/list]
 
 [line]
@@ -57,8 +82,14 @@ In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squa
 [size=5][b]Controls[/b][/size]
 
 [list]
-[*][b]0[/b]: Lead the way on / off (off = the game's normal follow)
+[*][b]Z (tap)[/b]: The order that fits what you aim at
+[*][b]Z (hold)[/b]: The order list: mouse up/down picks the order, left/right who; let go to give it
+[*][b]0[/b]: Who gets the order: all, red, blue, the one or two nearest the spot
+[*][b]0 while holding Z[/b]: The order waits for your go; then tap [b]Z[/b]: GO
+[*][b]Shift+Z[/b]: Same as Z, so orders work while you sprint
 [/list]
+
+Orders work on foot only (in a ship Z is the game's free look). A gamepad layout is planned.
 
 The key follows the realism set's shared key plan and can be changed in scripts\config.lua.
 
@@ -75,7 +106,11 @@ Edit Mods\SquadTactics\scripts\config.lua (every line is optional):
 [*]Lead.Crouch — crouch at the spot.
 [*]Lead.CombatRange, Lead.CombatSeconds — when gunfire hands them back to the game's combat AI.
 [*]Lead.MaxRange, Lead.FloorHeight — a pointman this far away, or on another floor, goes back to the squad.
-[*]Lead.StartOn, Lead.Key, Messages.
+[*]Orders.Key, Orders.WhoKey, Orders.HoldTime, Orders.MenuStep — the order keys and the list.
+[*]Orders.RedSize — how many soldiers are in the red team.
+[*]Orders.Spread, Orders.HoldArc, Orders.DoorHalfWidth — how soldiers spread at a spot or a door.
+[*]Orders.ClearAfter, Orders.ClearQuiet — when they go in, and when the room counts as clear.
+[*]Lead.StartOn, Lead.Key (none by default), Messages.
 [/list]
 
 [line]
@@ -85,6 +120,8 @@ Edit Mods\SquadTactics\scripts\config.lua (every line is optional):
 [*][b]No true cover map.[/b] The game gives mods no cover points, so a pointman picks "the side of the corridor, against the wall if there is one", found with a couple of line traces.
 [*][b]Straight moves where there is no navigation data[/b] (station decks): a pointman then walks in a straight line to its spot and stops early if something is in the way.
 [*][b]Silent Ops' quiet squad orders[/b] (F3) also steer the squad: use one or the other at a time.
+[*][b]Doors[/b] are recognised by the game's door Blueprints (dungeon doors). Aimed at a plain doorway with no door, "Stack up" is still in the list (the wall around it is the frame).
+[*][b]Finish the downed[/b] (Hardcore Tactical Realism's knocked-out enemies) and [b]patrols[/b] are planned, as is a gamepad layout.
 [/list]
 
 Design notes and plans (more orders, enemy patrols that leapfrog too): [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics/blob/main/DESIGN.md]DESIGN.md[/url]. Version history: [url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics/blob/main/CHANGELOG.md]CHANGELOG.md[/url].
@@ -97,7 +134,7 @@ Separate mods that work alone or in any combination. The [url=https://github.com
 [list]
 [*][b][url=https://github.com/hubertdungen/SpaceBourne2-HardcoreTacticalRealism]Hardcore Tactical Realism[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/4]Nexus[/url]): realistic ballistics, wounds and tactical AI. The core of the set.
 [*][b][url=https://github.com/hubertdungen/SpaceBourne2-SilentOps]Silent Ops[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/6]Nexus[/url]): stealth, silent takedowns and suppressors.
-[*][b][url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics]Squad Tactics[/url][/b]: your squad leads the way, bounding from cover.
+[*][b][url=https://github.com/hubertdungen/SpaceBourne2-SquadTactics]Squad Tactics[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/18]Nexus[/url]): squad orders like Ready or Not, and your squad leads the way.
 [*][b][url=https://github.com/hubertdungen/SpaceBourne2-AmmoDiscipline]Ammo Discipline[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/12]Nexus[/url]): carried ammo limits and scavenging, so every magazine counts.
 [*][b][url=https://github.com/hubertdungen/SpaceBourne2-GearWithoutLevels]Gear Without Levels[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/7]Nexus[/url]): use gear above your level, with small handling penalties.
 [*][b][url=https://github.com/hubertdungen/SpaceBourne2-TacticalFirstPerson]Tactical First Person[/url][/b] ([url=https://www.nexusmods.com/spacebourne2/mods/15]Nexus[/url]): first person on foot, weapons held up, aiming down the sights.

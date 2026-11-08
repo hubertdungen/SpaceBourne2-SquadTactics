@@ -1,5 +1,25 @@
 # Changelog
 
+## 0.2.0 — 2026-11-08
+
+- **Squad orders, Ready-or-Not style.** Aim at a spot and tap **Z** for the order that fits it, or
+  hold **Z** for the order list next to the crosshair (mouse up/down picks, left/right picks who; let
+  go to give it). **0** picks who: all, red team, blue team, the one or two soldiers nearest the spot.
+- Orders: move here, hold & cover, stack up (at a door), stack & clear (two go in to the corners, the
+  rest cover the doorway, "Room clear"), cover him (one of your soldiers), lead the way, fall in.
+- Soldiers on a spot keep fighting the game's way and come back to it: the game's AI follows our
+  spot instead of you. Crouched watchers fight when shots come near and then watch again.
+- Orders on your go: 0 while holding Z makes the order wait; a tap of Z then starts them all (GO).
+- A soldier that cannot reach its spot goes to the middle of the order instead of standing still.
+- "Lead the way" stays on by default; it is now in the order list (with "Fall in"), and 0 no longer
+  switches it (`Lead.Key` is empty by default).
+- Fixed: after a trip in a ship, pointmen could stay paused (standing still) until the next load.
+- Tested in game (scripted, tests 30-35): the order list and markers drawn, move here (all), hold &
+  cover (red) with a fight and back, fall in (every soldier back on your slot), stack up on a wall,
+  stack & clear, an order on your go, lead the way from the list, cover him; the hit actor and doors
+  read from the aim. No pause in a tick above 4 ms after the one squad read at load.
+- Not yet: a gamepad layout (planned), finishing Hardcore Tactical Realism's downed enemies, patrols.
+
 ## 0.1.1 — 2026-11-08
 
 - **Lead the way works in dungeons.** In a dungeon the pointmen stood still or moved about 1 m.

@@ -129,7 +129,7 @@ matches modifiers exactly). 0.2.0 changes the keys: see section 8.2.
   pointmen stay put while you stand; with a wall right ahead the first pointman retried every tick
   (2.5 ms), so a failed spot now waits `RetrySeconds` (2 s).
 
-## 8. 0.2.0 plan: squad orders like Ready or Not (2026-11-08, not built yet)
+## 8. 0.2.0: squad orders like Ready or Not (2026-11-08)
 
 The user: pick everyone, a team or one or two soldiers, aim at a spot and give an order there, as in
 Ready or Not. Wished orders: move here, hold and cover here, stack up at a door and clear the room,
@@ -241,3 +241,27 @@ no per-frame out-parameter calls.
    dungeon doors.
 2. Build, then a scripted run per order (move, hold, stack and clear, cover, fall in, queue and go)
    and screenshots of the list and a stack-up for the README.
+
+### 8.6 Built (0.2.0) and verified in game (tests 30-35, scripted, test slot)
+
+- Code: `st/orders.lua` (who, aim, context, anchors, orders, the 0.5 s tick), `st/menu.lua` (Z held,
+  the list, the view hold, drawing), `st/lead.lua` (soldiers with orders are left out of the
+  pointmen; "Lead the way" can be limited to the selection).
+- The hit result's `Actor` comes back as an `FWeakObjectPtr` userdata (test 33); its own `Get()` gives
+  the actor (test 34: `StaticMeshActor`, `C_SpaceDungeonTransmitor_C`, a squad soldier). Doors are
+  recognised by class or by the actor a part is attached to. "Cover him" only for one of your squad
+  (the hit actor, or a hit on its body): test 34 gave "cover him" for a hit on the floor next to a
+  soldier and even for a static mesh.
+- Anchors: one `TargetPoint` + `ChildActorComponent` per soldier and order; the soldier's `GoalRM` /
+  `GoalActor` point at it; "Fall in" puts the old slot back (else your `SquadLocations[Crew Index]`).
+  Test 32: three of four soldiers on their spots within 0.5 m; the fourth's spot had no path, so a
+  soldier without a path now goes to the order's centre (stuck 4 s: the same).
+- Hold & cover: watchers paused and crouched (verified); an enemy's shots 25 m away let them fight
+  (unpaused, 2.5 m off the spot) and 16 s later they watched again on their spot (verified).
+- Stack & clear: the first two went in to the room spots, the rest stayed stacked (verified on a
+  wall; a real interior door still to see in a dungeon).
+- An order on your go, then GO: all four on their spots (verified). Lead the way from the list and
+  fall in for everyone (lead off, every slot back on you): verified.
+- Costs: nothing per frame unless Z is down or a marker shows. One squad read at load (~50 ms);
+  test 33 found a read every 5 s while all soldiers had orders (lead.lua asked for pointmen that
+  could not be found): now only when the list is stale.
