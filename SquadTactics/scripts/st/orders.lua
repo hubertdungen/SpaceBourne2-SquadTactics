@@ -46,13 +46,19 @@ local function yawOf(x, y) return math.deg(math.atan(y, x)) end
 local AIM, aimFresh, actorNote = {}, false, false
 local WHITE = { R = 1, G = 1, B = 1, A = 1 }
 
+-- The hit result's Actor is a weak pointer: UE4SS hands back an FWeakObjectPtr (test 33), whose own
+-- Get() gives the object. Recognised by its name first: no method is called on anything else.
 local function hitActor(out)
-    local a
-    pcall(function() a = out.Actor end)
-    if U.valid(a) then return a end
-    pcall(function() a = out.HitObjectHandle.Actor end)
-    if U.valid(a) then return a end
-    return nil
+    local w
+    pcall(function() w = out.Actor end)
+    if type(w) ~= "userdata" then return nil end
+    local name = ""
+    pcall(function() name = tostring(w) end)
+    if not name:find("^FWeakObjectPtr") then return U.valid(w) and w or nil end
+    local o
+    pcall(function() o = w:Get() end)
+    if not U.valid(o) then pcall(function() o = w:get() end) end
+    return U.valid(o) and o or nil
 end
 
 function O.aim(pc, p)
@@ -424,7 +430,12 @@ function O.give(order, a, now, sel)
     for i, s in ipairs(sel) do
         local m = newMan(s, order, now)
         m.face, m.home = faces[i], spots[i]
-        m.centre = (order == "stack" or order == "clear") and nil or { X = a.at.X, Y = a.at.Y, Z = a.at.Z + 90 }
+        if order == "stack" or order == "clear" then
+            local c, nx, ny = door(a)
+            m.centre = { X = c.X + nx * 120, Y = c.Y + ny * 120, Z = c.Z + 90 } -- in front of the door
+        else
+            m.centre = { X = a.at.X, Y = a.at.Y, Z = a.at.Z + 90 }
+        end
         if rooms and i <= 2 then m.room = rooms[i] end
         m.anchor, m.slot = spawnAnchor(spots[i])
         if m.slot then setSlot(m, m.slot, m.anchor) end

@@ -213,14 +213,17 @@ end
 local function recruit(now, pos)
     local want = math.max(1, math.min(2, cfg().Pointmen or 2))
     if #L.men >= want then return end
-    local best = {}
+    local best, alive = {}, 0
     for _, s in ipairs(L.squad) do
+        if U.alive(s.obj, s.a) then alive = alive + 1 end
         if U.alive(s.obj, s.a) and usable(s.obj) and not isMan(s.a) and not L.busy[s.a] and (not L.only or L.only[s.a]) then
             local l = U.location(s.obj)
             if l and dz(l, pos) < (cfg().FloorHeight or 350) then best[#best + 1] = { s = s, d = U.dist2(l, pos) } end
         end
     end
-    if #best == 0 and #L.squad > 0 then L.scanAt = math.min(L.scanAt, now + 5) end
+    -- the list has gone stale (a load): look again soon. Soldiers that are busy with orders, down or not
+    -- allowed to lead are no reason to read the list again (test 33: a 50 ms read every 5 s).
+    if alive == 0 and #L.squad > 0 then L.scanAt = math.min(L.scanAt, now + 5) end
     table.sort(best, function(x, y) return x.d < y.d end)
     for i = 1, math.min(#best, want - #L.men) do
         local s = best[i].s
@@ -230,6 +233,7 @@ local function recruit(now, pos)
         L.men[#L.men + 1] = m
         U.log(string.format("pointman %d: %s", #L.men, tostring(s.a)))
     end
+    return alive
 end
 
 -- The next spot for a pointman: Lead.Distance ahead of you (shortened before a wall), then against the
@@ -361,8 +365,8 @@ function L.tick(now)
     -- read again only when it has nobody left to give (0.1.0 read it after every fight, test 27)
     local want = math.max(1, math.min(2, c.Pointmen or 2))
     if #L.men < want then
-        recruit(now, pos)
-        if #L.men < want then
+        local alive = recruit(now, pos)
+        if #L.men < want and (alive or 0) == 0 then
             scan(now)
             recruit(now, pos)
         end
