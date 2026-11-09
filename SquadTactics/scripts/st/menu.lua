@@ -95,13 +95,16 @@ local function steer(pc)
     if dp ~= 0 or dy ~= 0 then pcall(function() pc:SetControlRotation(M.frozen) end) end
     local step = cfg().MenuStep or 3
     M.accP = math.max(-(#M.items - 0.5) * step, math.min(0.5 * step, M.accP + dp))
+    local was = M.idx
     M.idx = math.max(1, math.min(#M.items, 1 + math.floor(-M.accP / step + 0.5)))
+    if M.idx ~= was then U.log(string.format("key: list row %d (%s), mouse %.1f deg", M.idx, tostring(M.items[M.idx]), -M.accP)) end
     M.accY = M.accY + dy
     local side = step * 2.5
     if math.abs(M.accY) > side then
         local n = #O.WHO
         O.who = (O.who - 1 + (M.accY > 0 and 1 or -1)) % n + 1
         M.accY = 0
+        U.log("key: list who " .. tostring(O.WHO[O.who]))
     end
 end
 

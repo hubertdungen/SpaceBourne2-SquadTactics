@@ -186,6 +186,7 @@ function O.cycleWho(now)
     local who = O.WHO[O.who]
     local n = #O.selected(now, nil)
     say(string.format("Squad: %s (%d)", O.WHO_NAME[who], n))
+    U.log(string.format("who: %s (%d)", O.WHO_NAME[who], n))
     return who
 end
 
@@ -392,6 +393,7 @@ function O.give(order, a, now, sel)
     local tag = O.WHO_NAME[who]
     if #sel == 0 then say(string.format("%s: nobody to order", tag)); return false end
     O.stats.orders = O.stats.orders + 1
+    U.log(string.format("order: %s for %s (%d)", order, tag, #sel))
     if order == "fallin" then
         for _, s in ipairs(sel) do if O.men[s.a] then clear(O.men[s.a]) end end
         if who == "all" then L.on = false; L.only = nil; L.releaseAll("fall in") else
