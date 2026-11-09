@@ -119,7 +119,8 @@ end
 function M.frame(hud, w, h, now)
     if M.down then
         local pc = L.pc
-        local d = U.valid(pc) and keyDown(pc) or nil
+        local d = nil -- (not "valid and keyDown() or nil": a key that is up gave nil there, test 36c)
+        if U.valid(pc) then d = keyDown(pc) end
         if M.demoUntil then d = now < M.demoUntil end
         if d then M.seen = true end
         -- the key bind can run before the game's input has Z down (test 36b): wait a moment for it
