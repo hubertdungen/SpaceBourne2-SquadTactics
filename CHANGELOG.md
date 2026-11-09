@@ -18,7 +18,7 @@
   cover (red) with a fight and back, fall in (every soldier back on your slot), stack up on a wall,
   stack & clear, an order on your go, lead the way from the list, cover him; the hit actor and doors
   read from the aim. No pause in a tick above 4 ms after the one squad read at load.
-- Not yet: a gamepad layout (planned), finishing Hardcore Tactical Realism's downed enemies, patrols.
+- Keyboard and mouse only for now. Not in yet: finishing Hardcore Tactical Realism's downed enemies, patrols.
 
 ## 0.1.1 — 2026-11-08
 

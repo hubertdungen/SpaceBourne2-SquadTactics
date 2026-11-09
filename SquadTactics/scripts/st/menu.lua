@@ -20,14 +20,17 @@ local M = { down = false, open = false, items = {}, idx = 1, queued = false, fon
 
 local function cfg() return SQUAD_TACTICS.cfg.Orders end
 
-local ZKEY
-local function keyDown(pc)
-    if not ZKEY then
-        local ok, k = pcall(function() return { KeyName = FName(M.keyName or "Z") } end)
+local KEYS = {}
+local UE_NAME = { ["0"] = "Zero", ["1"] = "One", ["2"] = "Two", ["3"] = "Three", ["4"] = "Four", ["5"] = "Five",
+    ["6"] = "Six", ["7"] = "Seven", ["8"] = "Eight", ["9"] = "Nine" }
+local function keyDown(pc, name)
+    name = name or M.keyName or "Z"
+    if not KEYS[name] then
+        local ok, k = pcall(function() return { KeyName = FName(UE_NAME[name] or name) } end)
         if not ok then return nil end
-        ZKEY = k
+        KEYS[name] = k
     end
-    local ok, d = pcall(function() return pc:IsInputKeyDown(ZKEY) end)
+    local ok, d = pcall(function() return pc:IsInputKeyDown(KEYS[name]) end)
     if not ok or type(d) ~= "boolean" then return nil end
     return d
 end
@@ -45,7 +48,10 @@ function M.press(now)
     L.player = p
     local pc = L.pc
     if not U.valid(pc) then return end
-    M.down, M.at, M.open, M.queued = true, now, false, false
+    M.down, M.at, M.open, M.queued, M.seen, M.whoDown = true, now, false, false, false, false
+    -- the view holds still from the press on: mouse moves pick the row as soon as the list is up
+    M.accP, M.accY, M.frozen = 0, 0, nil
+    pcall(function() local x = pc:GetControlRotation(); M.frozen = { Pitch = x.Pitch, Yaw = x.Yaw, Roll = 0 } end)
     M.aim = O.aim(pc, p)
     M.items, M.def = O.menuFor(M.aim)
     M.idx = 1
@@ -54,11 +60,7 @@ end
 
 -- 0 pressed
 function M.who(now)
-    if M.down then
-        M.queued = not M.queued
-        U.log("key: 0 with Z held: on your go = " .. tostring(M.queued))
-        return
-    end
+    if M.down then return end -- read in M.frame while Z is down (the 0 bind does not fire then, test 36b)
     U.log("key: 0")
     O.cycleWho(now)
 end
@@ -111,8 +113,6 @@ end
 local function openList(pc, now)
     U.log("key: Z held: list open")
     M.open = true
-    M.accP, M.accY = 0, 0
-    pcall(function() local x = pc:GetControlRotation(); M.frozen = { Pitch = x.Pitch, Yaw = x.Yaw, Roll = 0 } end)
 end
 
 -- Each frame (HUD draw): Z still down? then the list, steering and drawing.
@@ -121,11 +121,21 @@ function M.frame(hud, w, h, now)
         local pc = L.pc
         local d = U.valid(pc) and keyDown(pc) or nil
         if M.demoUntil then d = now < M.demoUntil end
+        if d then M.seen = true end
+        -- the key bind can run before the game's input has Z down (test 36b): wait a moment for it
+        if d == false and not M.seen and now - M.at < 0.3 then d = true end
         if d == nil then
             release(now) -- cannot read the key: a tap
         elseif d then
             if not M.open and now - M.at >= (cfg().HoldTime or 0.25) then openList(pc, now) end
-            if M.open then steer(pc) end
+            steer(pc)
+            -- 0 while Z is down: the order waits for your go
+            local w = U.valid(pc) and keyDown(pc, M.whoName or "0") or false
+            if w and not M.whoDown then
+                M.queued = not M.queued
+                U.log("key: 0 with Z held: on your go = " .. tostring(M.queued))
+            end
+            M.whoDown = w == true
         else
             release(now)
         end

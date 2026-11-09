@@ -202,7 +202,8 @@ if not same(cfg.Lead.Key, o.Key) and not same(cfg.Lead.Key, o.WhoKey) then
 end
 local orderKey, whoKey = "none", "none"
 if o.Enabled ~= false then
-    M.keyName = (o.Key or "Z"):upper()
+    M.keyName = (o.Key or "Z"):upper():gsub("SHIFT%+", "")
+    M.whoName = (o.WhoKey or "0"):upper():gsub("SHIFT%+", "")
     orderKey = bind(o.Key, function() M.press(os.clock()) end)
     if orderKey ~= "none" and not o.Key:upper():find("SHIFT") then bind("Shift+" .. o.Key, function() M.press(os.clock()) end) end
     whoKey = bind(o.WhoKey, function() M.who(os.clock()) end)

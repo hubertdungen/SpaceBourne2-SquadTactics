@@ -109,7 +109,7 @@ Tactics never writes to your saves.
 | **0** while holding Z | The order waits for your go; then tap **Z**: GO |
 | **Shift+Z** | Same as Z, so orders work while you sprint |
 
-Orders work on foot only (in a ship Z is the game's free look). A gamepad layout is planned.
+Orders work on foot only (in a ship Z is the game's free look), with keyboard and mouse for now.
 
 The key follows the realism set's shared key plan and can be changed in `scripts\config.lua`.
 
@@ -139,8 +139,9 @@ Edit `Mods\SquadTactics\scripts\config.lua` (every line is optional):
 - **Silent Ops' quiet squad orders** (F3) also steer the squad: use one or the other at a time.
 - **Doors** are recognised by the game's door Blueprints (dungeon doors). Aimed at a plain doorway
   with no door, "Stack up" is still in the list (the wall around it is the frame).
-- **Finish the downed** (Hardcore Tactical Realism's knocked-out enemies) and **patrols** are
-  planned, as is a gamepad layout.
+- **Keyboard and mouse only** for now: the orders have no gamepad buttons yet.
+- **Finish the downed** (Hardcore Tactical Realism's knocked-out enemies) and **patrols** are not in
+  yet.
 
 Design notes and plans (more orders, enemy patrols that leapfrog too): [DESIGN.md](DESIGN.md).
 Version history: [CHANGELOG.md](CHANGELOG.md).
