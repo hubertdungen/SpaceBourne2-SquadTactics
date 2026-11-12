@@ -129,7 +129,9 @@ function M.frame(hud, w, h, now)
             release(now) -- cannot read the key: a tap
         elseif d then
             if not M.open and now - M.at >= (cfg().HoldTime or 0.25) then openList(pc, now) end
-            steer(pc)
+            -- while you are down the game turns the camera by itself (test 37): no steering, the list
+            -- gives its first order (Rescue me)
+            if not O.down() then steer(pc) end
             -- 0 while Z is down: the order waits for your go
             local w = U.valid(pc) and keyDown(pc, M.whoName or "0") or false
             if w and not M.whoDown then
