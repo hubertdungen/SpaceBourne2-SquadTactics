@@ -25,7 +25,7 @@ O.COLOR = {
     two = { R = 0.92, G = 0.92, B = 0.92, A = 1 },
 }
 O.NAME = { move = "Move here", hold = "Hold & cover", stack = "Stack up", clear = "Stack & clear",
-    lead = "Lead the way", cover = "Cover him", fallin = "Fall in", go = "GO" }
+    lead = "Lead the way", cover = "Cover him", fallin = "Fall in", go = "GO", rescue = "Rescue me" }
 
 local function cfg() return SQUAD_TACTICS.cfg.Orders end
 local function lcfg() return SQUAD_TACTICS.cfg.Lead end
@@ -133,8 +133,60 @@ function O.context(a)
     return "move"
 end
 
+-- "Rescue me" through Hardcore Tactical Realism 0.4.16+ (its README, "For other mods"): you are down
+-- while your pawn's Injured? is true; creating HTR's rescue.request file makes your rescue urgent (the
+-- nearest ally comes at once). Separate Lua states, so a file. Checked once per game start: HTR's
+-- version from its main.lua, and not switched off in mods.txt.
+local function modsDir() return U.Dir:match("^(.*[\\/])[^\\/]+[\\/]$") end
+
+function O.htrRescue()
+    if O.htrChecked then return O.htrOK end
+    O.htrChecked, O.htrOK = true, false
+    local dir = modsDir()
+    if not dir then return false end
+    local f = io.open(dir .. "HardcoreTacticalRealism\\scripts\\main.lua", "r")
+    if not f then U.log("rescue me: Hardcore Tactical Realism not found"); return false end
+    local src = f:read("*a") or ""
+    f:close()
+    local a, b, c = src:match('VERSION%s*=%s*"(%d+)%.(%d+)%.(%d+)"')
+    local v = a and (tonumber(a) * 10000 + tonumber(b) * 100 + tonumber(c)) or 0
+    local off = false
+    local m = io.open(dir .. "mods.txt", "r")
+    if m then
+        local t = m:read("*a") or ""
+        m:close()
+        off = t:find("HardcoreTacticalRealism%s*:%s*0") ~= nil
+    end
+    O.htrOK = v >= 416 and not off
+    O.htrDir = dir .. "HardcoreTacticalRealism\\"
+    U.log(string.format("rescue me: Hardcore Tactical Realism %s.%s.%s%s -> %s", tostring(a), tostring(b), tostring(c),
+        off and " (off in mods.txt)" or "", O.htrOK and "available" or "not available (needs 0.4.16)"))
+    return O.htrOK
+end
+
+-- you are down (HTR holds you knocked out, or the game's own injured state)
+function O.down()
+    return U.valid(L.player) and U.get(L.player, "Injured?", false) == true
+end
+
+local function rescue(now)
+    local ok = false
+    if O.htrRescue() then
+        local f = io.open(O.htrDir .. "rescue.request", "w")
+        if f then f:write("Squad Tactics\n"); f:close(); ok = true end
+    end
+    U.log("order: rescue me, request written " .. tostring(ok))
+    say(ok and "Rescue requested" or "Rescue me needs Hardcore Tactical Realism 0.4.16")
+    return ok
+end
+
 -- The order list for this aim, the fitting one first; with orders waiting, GO first.
+-- While you are down: Rescue me (with HTR 0.4.16+), else Fall in: everyone comes to you.
 function O.menuFor(a)
+    if O.down() then
+        local def = O.htrRescue() and "rescue" or "fallin"
+        return def == "rescue" and { "rescue", "fallin" } or { "fallin" }, def
+    end
     local def = O.context(a)
     local items = {}
     if #O.queue > 0 then items[#items + 1] = "go" end
@@ -388,6 +440,7 @@ end
 
 -- Give an order --------------------------------------------------------------------------------------
 function O.give(order, a, now, sel)
+    if order == "rescue" then return rescue(now) end
     sel = sel or O.selected(now, a and a.at)
     local who = O.WHO[O.who]
     local tag = O.WHO_NAME[who]

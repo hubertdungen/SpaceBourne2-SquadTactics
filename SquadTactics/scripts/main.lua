@@ -11,7 +11,7 @@
     st/hudmsg.lua     the set's on-screen line (shared by the set)
 ]]
 
-local VERSION = "0.2.0"
+local VERSION = "0.2.1"
 
 local U = require("st.util")
 
