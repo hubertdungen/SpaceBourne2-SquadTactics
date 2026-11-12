@@ -1,5 +1,17 @@
 # Changelog
 
+## 0.2.1 — 2026-11-12
+
+- **Rescue me.** While you are down (knocked out by Hardcore Tactical Realism), a tap of **Z** asks
+  your squad to come for you now: the nearest ally (a medic first) comes at once, even with enemies
+  close. Holding Z shows "Rescue me" at the top of the list; letting go gives it. A line on screen
+  says "Rescue requested".
+- Needs Hardcore Tactical Realism 0.4.16 or later (it does the rescue). Without it, the Z tap while
+  you are down gives "Fall in": everyone comes back to you.
+- While you are down the list does not follow the mouse (the game turns the camera by itself then).
+- Tested in game (scripted, test 37, real key input, HTR 0.4.16): down, a Z tap gave Rescue me,
+  wrote HTR's request and HTR took it within a few seconds.
+
 ## 0.2.0 — 2026-11-08
 
 - **Squad orders, Ready-or-Not style.** Aim at a spot and tap **Z** for the order that fits it, or

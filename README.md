@@ -38,6 +38,9 @@ works alone or with the rest of the realism set.
 - **Still fighting.** Soldiers on a spot keep fighting the game's own way and come back to their
   spot afterwards: the game's AI follows our spot instead of you. Crouched watchers get up and
   fight when shots come near them, and go back to watching when it is over.
+- **Rescue me.** Down and bleeding out (Hardcore Tactical Realism's knockouts)? Tap **Z**: your
+  squad comes for you now, the nearest ally (a medic first) even with enemies close. Needs Hardcore
+  Tactical Realism 0.4.16 or later; without it, the tap brings everyone back to you (Fall in).
 - **Orders on your go.** Press 0 while holding Z and the order waits; tap Z when you are ready and
   every waiting order starts at once (GO).
 - **No spot out of reach.** A soldier that cannot get to its spot goes to the middle of the order
@@ -103,7 +106,7 @@ Tactics never writes to your saves.
 
 | Key | Action |
 |---|---|
-| **Z** (tap) | The order that fits what you aim at |
+| **Z** (tap) | The order that fits what you aim at; while you are down: Rescue me |
 | **Z** (hold) | The order list: mouse up/down picks the order, left/right who; let go to give it |
 | **0** | Who gets the order: all, red, blue, the one or two nearest the spot |
 | **0** while holding Z | The order waits for your go; then tap **Z**: GO |
