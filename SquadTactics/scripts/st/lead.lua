@@ -190,9 +190,12 @@ end
 -- Squad list: one FindAllOf (~50 ms), only when needed and at most every Lead.ScanSeconds.
 local function scan(now)
     if now < L.scanAt then return end
+    -- every Master_Soldier on your side (AI_Type 1): your ground squad and soldiers fighting with you on
+    -- a mission (0.2.2; 0.2.1 looked for your crew class only, and the user's log showed "squad scan: 0"
+    -- for an hour on planet missions)
     L.squad = {}
-    for _, s in ipairs(FindAllOf(G.SquadShort) or {}) do
-        if U.valid(s) then
+    for _, s in ipairs(FindAllOf(G.SoldierShort) or {}) do
+        if U.valid(s) and U.get(s, P.AIType, 1) == 1 then
             local crew = U.get(s, P.CrewIndex, 99)
             L.squad[#L.squad + 1] = { obj = s, a = U.addr(s), crew = type(crew) == "number" and crew or 99 }
         end
@@ -201,6 +204,19 @@ local function scan(now)
     L.empty = (#L.squad == 0) and (L.empty or 0) + 1 or 0
     L.scanAt = now + ((L.empty > 0 and L.empty <= 4) and 5 or (cfg().ScanSeconds or 20))
     U.log("squad scan: " .. #L.squad)
+    -- nobody on your side: once every 2 minutes, what is around (companions are other NPCs) for the log
+    if #L.squad == 0 and U.Verbose and now > (L.noteAt or 0) then
+        L.noteAt = now + 120
+        local comp, all = 0, 0
+        for _, a in ipairs(FindAllOf(G.ShooterShort) or {}) do
+            if U.valid(a) then
+                all = all + 1
+                if U.get(a, "IsCompanian", false) == true or U.get(a, "AIType", 0) == 1 then comp = comp + 1 end
+            end
+        end
+        local where = U.valid(L.player) and U.get(L.player, "WhereIsPlayer", nil) or nil
+        U.log(string.format("no soldiers on your side here (where %s): %d shooters, %d of them companions", tostring(where), all, comp))
+    end
 end
 
 local function isMan(a)
@@ -218,7 +234,9 @@ local function recruit(now, pos)
         if U.alive(s.obj, s.a) then alive = alive + 1 end
         if U.alive(s.obj, s.a) and usable(s.obj) and not isMan(s.a) and not L.busy[s.a] and (not L.only or L.only[s.a]) then
             local l = U.location(s.obj)
-            if l and dz(l, pos) < (cfg().FloorHeight or 350) then best[#best + 1] = { s = s, d = U.dist2(l, pos) } end
+            if l and dz(l, pos) < (cfg().FloorHeight or 350) and U.dist2(l, pos) < (cfg().MaxRange or 4000) * 0.75 then
+                best[#best + 1] = { s = s, d = U.dist2(l, pos) }
+            end
         end
     end
     -- the list has gone stale (a load): look again soon. Soldiers that are busy with orders, down or not

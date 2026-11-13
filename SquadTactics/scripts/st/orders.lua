@@ -204,9 +204,15 @@ end
 
 -- Who -------------------------------------------------------------------------------------------------
 local function squadNow(now)
+    -- soldiers on your side near you (a big battle can have dozens on your side: only those in reach)
     local out = {}
+    local me = U.valid(L.player) and U.location(L.player) or nil
+    local reach = (cfg().Range or 5000) * 1.2
     for _, s in ipairs(L.ensureSquad(now)) do
-        if U.alive(s.obj, s.a) and H().usable(s.obj) then out[#out + 1] = s end
+        if U.alive(s.obj, s.a) and H().usable(s.obj) then
+            local l = me and U.location(s.obj) or nil
+            if not me or (l and U.dist2(l, me) <= reach) then out[#out + 1] = s end
+        end
     end
     table.sort(out, function(x, y) if x.crew ~= y.crew then return x.crew < y.crew end; return tostring(x.a) < tostring(y.a) end)
     return out
@@ -271,8 +277,9 @@ local function slotOn(actor)
 end
 
 local function setSlot(m, comp, actor)
-    if m.oldRM == nil then
-        m.oldRM, m.oldGA = U.get(m.obj, P.GoalRM, false), U.get(m.obj, P.GoalActor, false)
+    if not m.slotSaved then
+        m.slotSaved = true
+        m.oldRM, m.oldGA = U.get(m.obj, P.GoalRM, nil), U.get(m.obj, P.GoalActor, nil)
     end
     m.slot, m.slotActor = comp, actor
     pcall(function() m.obj[P.GoalRM] = comp; m.obj[P.GoalActor] = actor end)
@@ -300,7 +307,8 @@ end
 local function clear(m)
     if U.alive(m.obj, m.a) then
         local rm, ga = homeSlot(m)
-        if rm then pcall(function() m.obj[P.GoalRM] = rm; m.obj[P.GoalActor] = ga end) end
+        if not rm and m.slotSaved then rm, ga = m.oldRM, m.oldGA end -- a mission ally: what it had
+        if rm ~= nil or m.slotSaved then pcall(function() m.obj[P.GoalRM] = rm; m.obj[P.GoalActor] = ga end) end
         H().setTimer(m.obj, true)
         pcall(function() m.obj:UnCrouch(false) end)
         if m.rot ~= nil then pcall(function() m.obj:SetRotationMode(m.rot) end) end
@@ -444,7 +452,11 @@ function O.give(order, a, now, sel)
     sel = sel or O.selected(now, a and a.at)
     local who = O.WHO[O.who]
     local tag = O.WHO_NAME[who]
-    if #sel == 0 then say(string.format("%s: nobody to order", tag)); return false end
+    if #sel == 0 then
+        say(#L.squad == 0 and "No squad here: call your ground squad first" or string.format("%s: nobody to order", tag))
+        U.log("order: " .. tostring(order) .. " - nobody (" .. #L.squad .. " on your side)")
+        return false
+    end
     O.stats.orders = O.stats.orders + 1
     U.log(string.format("order: %s for %s (%d)", order, tag, #sel))
     if order == "fallin" then

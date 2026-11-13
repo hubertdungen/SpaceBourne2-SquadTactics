@@ -3,6 +3,8 @@
 local G = {}
 
 G.SquadShort   = "Q1_GroundSquad_C"                                          -- your ground squad soldiers
+G.SoldierShort = "Master_Soldier_C"   -- FindAllOf on it also returns its children (the squad, test 38)
+G.ShooterShort = "Q1_Shooter_AI_C"    -- on-foot NPCs with a gun (companions among them)
 G.PlayerClass  = "Q1_Character_C"                                            -- you, on foot
 G.Controller   = "Q1Controller_C"                                            -- your player controller
 G.Shooter      = "/Game/1Data/11_AI/Q1_Shooter_AI.Q1_Shooter_AI_C"            -- every on-foot NPC with a gun
@@ -34,6 +36,7 @@ G.P = {
     Injured      = "InInjuredMode",
     RotationMode = "RotationMode",   -- ALS: 0 velocity direction, 1 looking direction, 2 aiming
     Target       = "C_Target",       -- the soldier's current target (Master_Soldier)
+    AIType       = "AI_Type",         -- Master_Soldier: 1 = your side (squad, mission allies)
     CrewIndex    = "Crew Index",     -- the soldier's place in your crew (teams are split by it)
     GoalRM       = "GoalRM",         -- the formation slot it follows (a ChildActorComponent on you)
     GoalActor    = "GoalActor",      -- that slot's actor
