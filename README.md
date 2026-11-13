@@ -25,6 +25,8 @@ works alone or with the rest of the realism set.
   pick one, left and right to pick who gets it, and let go of Z to give it. The view stays still
   while you choose.
 - **Who: 0.** All (gold), the red team, the blue team, or the one or two soldiers nearest the spot.
+  Every soldier on your side near you counts: your ground squad and soldiers fighting with you on
+  a mission.
   The teams are split by your crew order (red = the first two).
 - **The orders:**
   - *Move here*: each soldier to its own spot around the point, spread across your view.
@@ -34,7 +36,8 @@ works alone or with the rest of the realism set.
     cover the doorway; "Room clear" when nobody shoots for a few seconds.
   - *Cover him*: they keep close to that soldier wherever he goes.
   - *Lead the way*: those soldiers become the pointmen (see below).
-  - *Fall in*: back to following you (cancels any order).
+  - *Fall in*: back to following you (cancels any order; the pointmen keep leading).
+  - *Stop leading*: no more pointmen ("Lead the way" switches them on again).
 - **Still fighting.** Soldiers on a spot keep fighting the game's own way and come back to their
   spot afterwards: the game's AI follows our spot instead of you. Crouched watchers get up and
   fight when shots come near them, and go back to watching when it is over.
@@ -75,8 +78,8 @@ works alone or with the rest of the realism set.
 
 ### On by default
 
-- "Lead the way" is on as soon as the mod is installed. "Fall in" for everyone from the order list
-  switches it off; "Lead the way" from the list switches it on again.
+- "Lead the way" is on as soon as the mod is installed. "Stop leading" in the order list switches it
+  off; "Lead the way" switches it on again.
 
 ## Requirements
 

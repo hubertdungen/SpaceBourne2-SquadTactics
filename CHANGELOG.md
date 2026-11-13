@@ -1,5 +1,23 @@
 # Changelog
 
+## 0.2.2 — 2026-11-13
+
+From your own game's log:
+- **Lead the way kept working only until the first "Fall in".** "Fall in" for everyone switched it
+  off, and it stayed off until "Lead the way" was picked again in the list. Now "Fall in" only
+  cancels orders: the pointmen lead again at once. To switch leading off, the list has
+  **Stop leading**.
+- **Orders and pointmen on missions.** Squad Tactics looked only for your own crew. It now takes
+  every soldier on your side near you, so soldiers fighting with you on a mission get orders too.
+  With nobody on your side near you, Z says "No squad here: call your ground squad first".
+- **No more soldiers stuck in walls.** A soldier with no path to its spot no longer walks there in a
+  straight line (one could get wedged); it follows you meanwhile.
+- **No more pointman churn.** With your squad far behind (more than 30 m), pointmen were picked and
+  dropped every half second. Now only soldiers within reach are picked.
+- Tested in game (scripted, tests 38-40): your side read through the parent soldier class (your
+  squad of 4 found), move here, cover him, stack up, fall in; after each fall in the pointmen led
+  again at once.
+
 ## 0.2.1 — 2026-11-12
 
 - **Rescue me.** While you are down (knocked out by Hardcore Tactical Realism), a tap of **Z** asks
