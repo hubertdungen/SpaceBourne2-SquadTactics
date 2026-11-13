@@ -25,7 +25,8 @@ O.COLOR = {
     two = { R = 0.92, G = 0.92, B = 0.92, A = 1 },
 }
 O.NAME = { move = "Move here", hold = "Hold & cover", stack = "Stack up", clear = "Stack & clear",
-    lead = "Lead the way", cover = "Cover him", fallin = "Fall in", go = "GO", rescue = "Rescue me" }
+    lead = "Lead the way", cover = "Cover him", fallin = "Fall in", go = "GO", rescue = "Rescue me",
+    leadoff = "Stop leading" }
 
 local function cfg() return SQUAD_TACTICS.cfg.Orders end
 local function lcfg() return SQUAD_TACTICS.cfg.Lead end
@@ -199,6 +200,7 @@ function O.menuFor(a)
         if a.ally then add("cover") end
     end
     add("lead"); add("fallin")
+    if L.on then add("leadoff") end
     return items, def
 end
 
@@ -411,7 +413,6 @@ local function goTo(m, spot, now, paused)
             U.log("orders: no path to " .. tostring(m.a) .. "'s spot; it goes to the centre")
         end
     end
-    if not H().moved(r) then pcall(function() r = c:MoveToLocation(spot, 60.0, true, false, false, false, nil, true) end) end
     m.spot, m.phase, m.since, m.lastPos, m.lastMoveAt = spot, "moving", now, U.location(m.obj), now
     return H().moved(r)
 end
@@ -461,10 +462,15 @@ function O.give(order, a, now, sel)
     U.log(string.format("order: %s for %s (%d)", order, tag, #sel))
     if order == "fallin" then
         for _, s in ipairs(sel) do if O.men[s.a] then clear(O.men[s.a]) end end
-        if who == "all" then L.on = false; L.only = nil; L.releaseAll("fall in") else
-            for _, s in ipairs(sel) do L.drop(s.a) end
-        end
+        if who == "all" then L.only = nil end
+        for _, s in ipairs(sel) do L.drop(s.a) end
         say(tag .. ": fall in")
+        return true
+    end
+    if order == "leadoff" then
+        L.on = false
+        L.releaseAll("stop leading")
+        say("Squad: stop leading")
         return true
     end
     if order == "lead" then

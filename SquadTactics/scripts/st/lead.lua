@@ -293,25 +293,9 @@ local function moveTo(m, spot, now, run)
             if moved(r) then spot = half end
         end
     end
-    if not moved(r) and from then
-        -- no path at all (station decks before a restart, test 23): a straight move (test 23b), but only
-        -- as far as the line from the pointman to the spot is clear, so it does not walk into a corner
-        how = "straight"
-        local a = { X = from.X, Y = from.Y, Z = from.Z + 40 }
-        local h = trace(a, { X = spot.X, Y = spot.Y, Z = a.Z })
-        local go = h ~= nil
-        if h then
-            local len = U.dist2(from, spot)
-            local keep = h - (cfg().WallGap or 80)
-            if keep < 150 or len < 1 then
-                go = false
-                how = string.format("no path, straight line blocked at %.1f m", h / 100)
-            else
-                spot = { X = from.X + (spot.X - from.X) * keep / len, Y = from.Y + (spot.Y - from.Y) * keep / len, Z = spot.Z }
-            end
-        end
-        if go then pcall(function() r = c:MoveToLocation(spot, 60.0, true, false, false, false, nil, true) end) end
-    end
+    -- 0.2.2: no straight move any more when there is no path (a soldier walked straight into something
+    -- stayed wedged, test 39; the user's log had "straight line blocked" 13 times): it follows you meanwhile
+    if not moved(r) then how = "no path" end
     if not moved(r) then
         unhold(m)
         return false, how .. " (move result " .. tostring(r) .. ")"
