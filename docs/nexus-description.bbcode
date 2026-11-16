@@ -23,6 +23,7 @@ In SpaceBourne 2 your ground squad trails behind you in a loose crowd. With Squa
     - [i]Lead the way[/i]: those soldiers become the pointmen (see below).
     - [i]Fall in[/i]: back to following you (cancels any order; the pointmen keep leading).
     - [i]Stop leading[/i]: no more pointmen ("Lead the way" switches them on again).
+[*][b]Cover under fire.[/b] Soldiers on a spot crouch (always when holding, under fire after [i]move here[/i]) and, with enemy fire coming in, move to cover within 5.5 m of their spot: something solid between them and the shooter. The game's own squad AI never crouches or takes cover, so this is on top of it.
 [*][b]Still fighting.[/b] Soldiers on a spot keep fighting the game's own way and come back to their spot afterwards: the game's AI follows our spot instead of you. Crouched watchers get up and fight when shots come near them, and go back to watching when it is over.
 [*][b]Rescue me.[/b] Down and bleeding out (Hardcore Tactical Realism's knockouts)? Tap [b]Z[/b]: your squad comes for you now, the nearest ally (a medic first) even with enemies close. Needs Hardcore Tactical Realism 0.4.16 or later; without it, the tap brings everyone back to you (Fall in).
 [*][b]Orders on your go.[/b] Press 0 while holding Z and the order waits; tap Z when you are ready and every waiting order starts at once (GO).
@@ -112,6 +113,7 @@ Edit Mods\SquadTactics\scripts\config.lua (every line is optional):
 [*]Orders.RedSize — how many soldiers are in the red team.
 [*]Orders.Spread, Orders.HoldArc, Orders.DoorHalfWidth — how soldiers spread at a spot or a door.
 [*]Orders.ClearAfter, Orders.ClearQuiet — when they go in, and when the room counts as clear.
+[*]Orders.Cover, Orders.CoverRange, Orders.CoverSeconds, Orders.CoverEvery, Orders.CoverTraces, Orders.CrouchUnderFire — cover under fire.
 [*]Lead.StartOn, Lead.Key (none by default), Messages.
 [/list]
 

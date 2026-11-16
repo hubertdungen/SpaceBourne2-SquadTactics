@@ -12,6 +12,11 @@
     It moves there, crouches and faces the shooter. None near: it crouches facing the shooter.
 - New settings in `Orders`: `Cover`, `CoverRange`, `CoverSeconds`, `CoverEvery`, `CoverTraces`,
   `CrouchUnderFire` (all on by default).
+- Tested in game (test 41, one test enemy firing from 25 m): a quiet *move here* leaves them
+  standing; under fire, within about 2 s three soldiers moved 2-4 m to cover and the fourth crouched
+  where it stood, and all four were still crouched 10 s later, although the game stood them up 69
+  times in 30 s; *Fall in* got them up and following again; *hold & cover* with no fire crouched.
+  Not yet tried against real pirates.
 
 ## 0.2.2 — 2026-11-13
 
