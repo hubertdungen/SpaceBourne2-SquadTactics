@@ -38,6 +38,9 @@ works alone or with the rest of the realism set.
   - *Lead the way*: those soldiers become the pointmen (see below).
   - *Fall in*: back to following you (cancels any order; the pointmen keep leading).
   - *Stop leading*: no more pointmen ("Lead the way" switches them on again).
+- **Cover under fire.** Soldiers on a spot crouch (always when holding, under fire after *move here*)
+  and, with enemy fire coming in, move to cover within 5.5 m of their spot: something solid between
+  them and the shooter. The game's own squad AI never crouches or takes cover, so this is on top of it.
 - **Still fighting.** Soldiers on a spot keep fighting the game's own way and come back to their
   spot afterwards: the game's AI follows our spot instead of you. Crouched watchers get up and
   fight when shots come near them, and go back to watching when it is over.
@@ -134,6 +137,8 @@ Edit `Mods\SquadTactics\scripts\config.lua` (every line is optional):
 - `Orders.RedSize` — how many soldiers are in the red team.
 - `Orders.Spread`, `Orders.HoldArc`, `Orders.DoorHalfWidth` — how soldiers spread at a spot or a door.
 - `Orders.ClearAfter`, `Orders.ClearQuiet` — when they go in, and when the room counts as clear.
+- `Orders.Cover`, `Orders.CoverRange`, `Orders.CoverSeconds`, `Orders.CoverEvery`, `Orders.CoverTraces`,
+  `Orders.CrouchUnderFire` — cover under fire.
 - `Lead.StartOn`, `Lead.Key` (none by default), `Messages`.
 
 ## Known limits

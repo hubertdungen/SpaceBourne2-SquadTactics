@@ -55,6 +55,12 @@ return {
         ClearAfter     = 1.5,    -- Stack & clear: seconds stacked before the first two go in
         ClearQuiet     = 5,      -- seconds without gunfire before "Room clear"
         MarkSeconds    = 2.5,    -- the marker stays this long on the spot after an order
+        Cover          = true,   -- under fire, soldiers on a spot move to cover near it (something solid between them and the shooter)
+        CoverRange     = 550,    -- how far from its spot a soldier looks for cover (cm; the game leashes it to 700 from the spot)
+        CoverSeconds   = 15,     -- shots this recent count as "under fire"
+        CoverEvery     = 20,     -- seconds between cover searches for one soldier
+        CoverTraces    = 24,     -- line traces at most per search (the cost)
+        CrouchUnderFire = true,  -- crouch on the spot under fire even after a plain "move here" (holding always crouches)
     },
 
     Messages = true,             -- short HUD line when the order is switched

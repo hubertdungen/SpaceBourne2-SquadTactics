@@ -11,7 +11,7 @@
     st/hudmsg.lua     the set's on-screen line (shared by the set)
 ]]
 
-local VERSION = "0.2.2"
+local VERSION = "0.2.3"
 
 local U = require("st.util")
 
@@ -24,7 +24,8 @@ local defaults = {
         CombatRange = 3000, CombatSeconds = 12, TickSeconds = 0.5, ScanSeconds = 20, FloorHeight = 350 },
     Orders = { Enabled = true, Key = "Z", WhoKey = "0", HoldTime = 0.25, MenuStep = 3, RedSize = 2, Range = 5000,
         Spread = 150, HoldArc = 90, DoorHalfWidth = 110, Crouch = true, ArriveRadius = 120, MoveTimeout = 12,
-        ClearAfter = 1.5, ClearQuiet = 5, MarkSeconds = 2.5 },
+        ClearAfter = 1.5, ClearQuiet = 5, MarkSeconds = 2.5, Cover = true, CoverRange = 550, CoverSeconds = 15,
+        CoverEvery = 20, CoverTraces = 24, CrouchUnderFire = true },
     Messages = true,
     Debug = { Log = false, Commands = false },
 }
@@ -78,7 +79,7 @@ local function npcShot(self)
     local a
     pcall(function() a = self:get() end)
     local at = U.location(a)
-    if at then fire(os.clock(), at, "enemy shot") end
+    if at then fire(os.clock(), at, "enemy shot"); O.enemyShot(os.clock(), at) end
 end
 local function squadShot(self)
     local a
@@ -90,6 +91,8 @@ local function squadShot(self)
     if at then fire(os.clock(), at, "squad shot at " .. tostring(U.className(t))) end
 end
 H.add(G.Fn.NpcShot, npcShot, "npc shot")
+H.add(G.Fn.StanceA, function(self) O.stanceHook(self) end, "squad stance")
+H.add(G.Fn.StanceB, function(self) O.stanceHook(self) end, "squad stance guarded")
 H.add(G.Fn.SquadShot, squadShot, "squad shot")
 H.add(G.Fn.SquadPistol, squadShot, "squad pistol")
 local function yourShot(what)
@@ -144,11 +147,12 @@ GT.every(1.0, function(now)
                 local parts = {}
                 for _, m in pairs(O.men) do
                     local l = U.location(m.obj)
-                    parts[#parts + 1] = string.format("%s %s/%s %.1f m from its spot%s", tostring(m.a), m.order, tostring(m.phase),
-                        (l and m.spot) and U.dist2(l, m.spot) / 100 or -1, m.paused and " paused" or "")
+                    parts[#parts + 1] = string.format("%s %s/%s %.1f m from its spot%s%s", tostring(m.a), m.order, tostring(m.phase),
+                        (l and m.spot) and U.dist2(l, m.spot) / 100 or -1, m.paused and " paused" or "",
+                        U.get(m.obj, "bIsCrouched", false) == true and " CROUCHED" or " standing")
                 end
-                U.warn(string.format("orders: %d given, %d anchors, %d soldiers with orders, %d waiting: %s", O.stats.orders,
-                    O.stats.anchors, O.count(), #O.queue, table.concat(parts, "; ")))
+                U.warn(string.format("orders: %d given, %d anchors, %d soldiers with orders, %d waiting, %d cover moves, %d stood up by the game and crouched again: %s",
+                    O.stats.orders, O.stats.anchors, O.count(), #O.queue, O.stats.covers or 0, O.stats.restood or 0, table.concat(parts, "; ")))
             end
             -- scripted tests: "order move", "queue stack", "go", "who", "menu 4" (the list up for 4 s)
             local now = os.clock()

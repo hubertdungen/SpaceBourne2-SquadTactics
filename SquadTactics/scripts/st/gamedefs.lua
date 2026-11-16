@@ -29,6 +29,10 @@ G.Fn = {
     SquadShot   = G.Soldier .. ":BattleShoot",
     SquadPistol = G.Soldier .. ":PistolShot",
 }
+-- The game's own battle tick calls SetWalkSpeed (or _Guarded) on every soldier each ~1.5 s, and both start
+-- with SetStance(0): standing. There is no cover logic anywhere in the squad AI (decompiled Master_Soldier).
+G.Fn.StanceA = G.Soldier .. ":SetWalkSpeed"
+G.Fn.StanceB = G.Soldier .. ":SetWalkSpeed_Guarded"
 
 G.P = {
     MainTimer    = "MainTimer",      -- the soldier's battle logic timer (FTimerHandle); paused while we lead

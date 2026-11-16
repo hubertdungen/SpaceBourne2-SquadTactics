@@ -1,5 +1,18 @@
 # Changelog
 
+## 0.2.3 — 2026-11-16
+
+- **Soldiers on a spot crouch and take cover under fire.** Sent to a spot, they used to walk there and
+  stand upright in the open, even under fire. The game's own squad AI has no cover logic at all, and
+  stands every soldier up again every second or so. Now:
+  - on a spot, soldiers crouch when holding, and under fire after a plain *move here* too;
+  - the game standing them up is undone right away;
+  - under fire (enemy shots within 90 m in the last 15 s) a soldier on *move here* or *hold & cover*
+    looks within 5.5 m of its spot for cover: a point with something solid between it and the shooter.
+    It moves there, crouches and faces the shooter. None near: it crouches facing the shooter.
+- New settings in `Orders`: `Cover`, `CoverRange`, `CoverSeconds`, `CoverEvery`, `CoverTraces`,
+  `CrouchUnderFire` (all on by default).
+
 ## 0.2.2 — 2026-11-13
 
 From your own game's log:

@@ -392,6 +392,88 @@ local function roomSpots(a)
 end
 
 -- Moving and holding --------------------------------------------------------------------------------
+-- Under fire: stance and cover ---------------------------------------------------------------------------
+-- The game's squad AI never crouches or takes cover: its battle tick (SetWalkSpeed) sets stance 0
+-- (standing) every ~1.5 s, so a soldier sent to a spot stood upright in the open, under fire too (the
+-- user's report, 2026-11-15). Here: the last enemy shot is remembered; soldiers on a spot crouch when
+-- holding, or when shots came lately, are crouched again right after the game stands them up (a post-hook
+-- of SetWalkSpeed), and under fire they move to cover near their spot: a point where something solid
+-- stands between it and the shooter.
+function O.enemyShot(now, at)
+    local me = U.valid(L.player) and U.location(L.player) or nil
+    if not at or (me and U.dist2(me, at) > 9000) then return end
+    O.threat = { pos = { X = at.X, Y = at.Y, Z = at.Z }, t = now }
+end
+
+local function threatNow(now)
+    local th = O.threat
+    if th and now - th.t < (cfg().CoverSeconds or 15) then return th end
+    return nil
+end
+
+local function crouchNow(m)
+    pcall(function() m.obj:Crouch(false) end)
+    if U.get(m.obj, "bIsCrouched", false) ~= true then pcall(function() m.obj:SetStance(1) end) end
+    m.crouchedBy = true
+end
+
+local function wantCrouch(m, now)
+    if cfg().Crouch == false then return false end
+    if m.phase ~= "there" and m.phase ~= "watching" and m.phase ~= "fighting" then return false end
+    if m.order == "hold" or m.order == "stack" or m.order == "clear" then return true end
+    return cfg().CrouchUnderFire ~= false and threatNow(now) ~= nil
+end
+
+-- the post-hook of the game's SetWalkSpeed / SetWalkSpeed_Guarded (it has just stood the soldier up)
+function O.stanceHook(self)
+    if next(O.men) == nil then return end
+    local a
+    pcall(function() a = self:get() end)
+    if not U.valid(a) then return end
+    local m = O.men[U.addr(a)]
+    if m and wantCrouch(m, os.clock()) then
+        crouchNow(m)
+        O.stats.restood = (O.stats.restood or 0) + 1
+    end
+end
+
+-- Is the straight line from p (crouch height) to the shooter blocked by something solid 0.5-2.6 m from p?
+local function covered(p, th)
+    local a = { X = p.X, Y = p.Y, Z = p.Z + 60 }
+    local b = { X = th.X, Y = th.Y, Z = p.Z + 60 }
+    local d = U.dist2(p, th)
+    local h = H().trace(a, b)
+    return h and h > 50 and h < 260 and h < d - 100, h
+end
+
+local RING = { 0, 45, 90, 135, 180, 225, 270, 315 }
+-- The nearest point within CoverRange of the soldier's spot that is covered from the shooter, reachable
+-- (a clear walk from the spot) and not further from the spot than the game's 7 m leash. nil: none.
+local function findCover(m, th)
+    local from = m.spot or U.location(m.obj)
+    if not from then return nil end
+    if covered(from, th.pos) then return from, "already covered" end
+    local range = math.min(cfg().CoverRange or 550, 600)
+    local tx, ty = norm(th.pos.X - from.X, th.pos.Y - from.Y)
+    local tries, budget = 0, cfg().CoverTraces or 24
+    for _, r in ipairs({ range * 0.4, range * 0.7, range }) do
+        for _, ang in ipairs(RING) do
+            if tries >= budget then return nil end
+            local rad = math.rad(ang)
+            -- the ring is turned so that the first points are the ones beside and behind the line to the shooter
+            local dx, dy = tx * math.cos(rad) - ty * math.sin(rad), tx * math.sin(rad) + ty * math.cos(rad)
+            local c = { X = from.X + dx * r, Y = from.Y + dy * r, Z = from.Z }
+            tries = tries + 1
+            local walk = H().trace({ X = from.X, Y = from.Y, Z = from.Z + 60 }, { X = c.X, Y = c.Y, Z = from.Z + 60 })
+            if walk == false then -- clear to walk
+                tries = tries + 1
+                if covered(c, th.pos) then return c, string.format("cover %.1f m from its spot", r / 100) end
+            end
+        end
+    end
+    return nil
+end
+
 -- A path to the spot; none: a path to the order's centre (test 32: a spread spot behind a crate or
 -- inside a wall left a soldier standing still); none either: straight at the spot. The anchor (its
 -- slot) goes where it goes.
@@ -434,6 +516,7 @@ local function there(m, now)
     m.phase, m.since = "there", now
     H().setTimer(m.obj, true)
     m.paused = false
+    if wantCrouch(m, now) then crouchNow(m) end
 end
 
 local function newMan(s, order, now)
@@ -570,6 +653,7 @@ end
 function O.tick(now)
     local c = cfg()
     local inClear, stacked, entered = false, true, 0
+    local coverBusy = false
     for a, m in pairs(O.men) do
         if not U.alive(m.obj, m.a) or not H().usable(m.obj) then
             clear(m)
@@ -600,6 +684,32 @@ function O.tick(now)
                 end
             elseif m.phase == "fighting" and now > (m.fightUntil or 0) then
                 if l and m.spot and U.dist2(l, m.spot) > 200 then goTo(m, m.spot, now, true) else watch(m, now) end
+            end
+            -- under fire (or holding): crouched on the spot; and under fire, cover near the spot
+            if wantCrouch(m, now) and U.get(m.obj, "bIsCrouched", false) ~= true then crouchNow(m) end
+            if not coverBusy and cfg().Cover ~= false and (m.order == "move" or m.order == "hold")
+                and (m.phase == "there" or m.phase == "watching" or m.phase == "fighting") then
+                local th = threatNow(now)
+                if th and l and U.dist2(l, th.pos) < 6000 and (not m.coverAt or now - m.coverAt > (cfg().CoverEvery or 20)) then
+                    coverBusy = true
+                    m.coverAt = now
+                    local c, why = findCover(m, th)
+                    if c and c ~= m.spot then
+                        U.log(string.format("cover: %s %s; moving there", tostring(m.a), why))
+                        m.face = yawOf(th.pos.X - c.X, th.pos.Y - c.Y)
+                        if U.valid(m.anchor) then pcall(function() m.anchor:K2_TeleportTo(c, { Pitch = 0, Yaw = 0, Roll = 0 }) end) end
+                        local keep = m.order
+                        goTo(m, c, now, false)
+                        m.order = keep
+                        O.stats.covers = (O.stats.covers or 0) + 1
+                    elseif c then
+                        m.face = yawOf(th.pos.X - c.X, th.pos.Y - c.Y)
+                        U.log("cover: " .. tostring(m.a) .. " " .. why)
+                    else
+                        m.face = yawOf(th.pos.X - l.X, th.pos.Y - l.Y)
+                        U.log("cover: " .. tostring(m.a) .. " none near its spot; crouched, facing the shooter")
+                    end
+                end
             end
             if m.order == "clear" then
                 inClear = true
